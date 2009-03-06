@@ -1,0 +1,22 @@
+#! /usr/bin/env perl
+use warnings;
+use strict;
+use ExtUtils::MakeMaker;
+
+WriteMakefile(
+              INC    => q{-I../include},
+              CC     => $ENV{'CXX'} || q{g++},
+              LIBS   => q{},
+              LINKTYPE=> q{dynamic},
+              NAME   => q{tinyclassifier},
+              OBJECT => q{tinyclassifier_wrap.o},
+              CCFLAGS => q{-Wall -fno-strict-aliasing -L../lib -ltinyclassifier},
+              LDDLFLAGS => q{-lstdc++},
+              clean => {FILES => 'tinyclassifier_wrap.cxx'}
+             );
+sub MY::postamble {
+  return << 'EOM';
+tinyclassifier_wrap.cxx: tinyclassifier.i
+	swig -I../include -Wall -c++ -perl5 $<
+EOM
+}
