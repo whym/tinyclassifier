@@ -1,7 +1,10 @@
 CXXFLAGS := $(CXXFLAGS) -I../include -L../lib -ltinyclassifier -lstdc++
 CC := $(CXX)
 
-sample: sample.o
+all: .succeed
+.succeed: sample
+	./run_tests.sh && touch $@
+sample: sample.o ../lib/libtinyclassifier.so
 	$(CXX) $(CXXFLAGS) -o $@ $<
 %o: %.cc
 	$(CXX) $(CXXFLAGS) -c -o $@ $<

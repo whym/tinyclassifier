@@ -6,12 +6,11 @@ use ExtUtils::MakeMaker;
 WriteMakefile(
               INC    => q{-I../include},
               CC     => $ENV{'CXX'} || q{g++},
-              LIBS   => q{},
+              LIBS   => q{-lstdc++ -L../lib -ltinyclassifier},
               LINKTYPE=> q{dynamic},
               NAME   => q{tinyclassifier},
               OBJECT => q{tinyclassifier_wrap.o},
-              CCFLAGS => q{-Wall -fno-strict-aliasing -L../lib -ltinyclassifier},
-              LDDLFLAGS => q{-lstdc++},
+              CCFLAGS => q{-Wall -shared -fno-strict-aliasing},
               clean => {FILES => 'tinyclassifier_wrap.cxx'}
              );
 sub MY::postamble {
