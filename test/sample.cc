@@ -6,7 +6,7 @@
 
 int main() {
   using namespace std;
-  Perceptron perc(3);
+  Perceptron<feature_value_t> perc(3);
   perc.iterations = 20;
   vector<feature_value_t> v;
   v.push_back(10);
@@ -19,38 +19,33 @@ int main() {
   }
   vector<vector<feature_value_t> > samples;
 
-  v.clear();
-  v.push_back(+1); v.push_back(+1); v.push_back(-1);
+  v.clear(); v.push_back(+1); v.push_back(+1); v.push_back(-1);
   samples.push_back(v);
 
-  v.clear();
-  v.push_back(-2); v.push_back(+2); v.push_back(+1);
+  v.clear(); v.push_back(-2); v.push_back(+2); v.push_back(+1);
   samples.push_back(v);
 
-  v.clear();
-  v.push_back(-1); v.push_back(+3); v.push_back(+4);
+  v.clear(); v.push_back(-1); v.push_back(+3); v.push_back(+4);
   samples.push_back(v);
 
-  v.clear();
-  v.push_back(-1); v.push_back(+5); v.push_back(+6);
+  v.clear(); v.push_back(-1); v.push_back(+5); v.push_back(+6);
   samples.push_back(v);
 
-  v.clear();
-  v.push_back(-1); v.push_back(+1); v.push_back(+2);
+  v.clear(); v.push_back(-1); v.push_back(+1); v.push_back(+1);
   samples.push_back(v);
 
-  vector<bool> b;
-  b.push_back(false);
-  b.push_back(false);
-  b.push_back(true);
-  b.push_back(true);
-  b.push_back(false);
+  vector<int> b;
+  b.push_back(-1);
+  b.push_back(-1);
+  b.push_back(+1);
+  b.push_back(+1);
+  b.push_back(-1);
 
   perc.train0(samples, b);
   for ( size_t i = 0; i < samples.size(); ++i ) {
     real_t res = perc.predict0(samples[i]);
     cout << res << endl;
-    if ( (b[i]?+1:-1) * res < 0 ) {
+    if ( b[i] * res < 0 ) {
       return 1;
     }
   }

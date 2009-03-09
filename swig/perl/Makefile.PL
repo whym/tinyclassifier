@@ -4,18 +4,12 @@ use strict;
 use ExtUtils::MakeMaker;
 
 WriteMakefile(
-              INC    => q{-I../include},
+              INC    => q{-I../../include},
               CC     => $ENV{'CXX'} || q{g++},
-              LIBS   => q{-lstdc++ -L../lib -ltinyclassifier},
+              LIBS   => q{-lstdc++ -L../../lib -ltinyclassifier},
               LINKTYPE=> q{dynamic},
               NAME   => q{tinyclassifier},
               OBJECT => q{tinyclassifier_wrap.o},
               CCFLAGS => q{-Wall -shared -fno-strict-aliasing},
               clean => {FILES => 'tinyclassifier_wrap.cxx'}
              );
-sub MY::postamble {
-  return << 'EOM';
-tinyclassifier_wrap.cxx: tinyclassifier.i
-	swig -I../include -Wall -c++ -perl5 $<
-EOM
-}

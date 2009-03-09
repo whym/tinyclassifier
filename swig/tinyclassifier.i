@@ -17,4 +17,5 @@ namespace std {
 %template(power_float) my_power<double>;
 %include tinyclassifier.h
 %include perceptron.h
-
+%template(IntPerceptron) Perceptron<int>;
+%template(FloatPerceptron) Perceptron<double>;
