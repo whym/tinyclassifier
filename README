@@ -1,33 +1,41 @@
-Tinyclassifier - a tiny machine learning library
+Tinyclassifier - a tiny machine learning library for scripting
 
 * Overview
 
-  Tinyclassifier is a machine learning library which has:
+  Tinyclassifier is a fast an flexible machine learning library with
+  following features:
 
  - Minimum dependencies to external libraries
- - Efficient internal implementation with C++
+ - Efficient and compact implementation with C++
  - Interfaces to ruby, perl, python, etc. via SWIG
 
 * Algorithms
 
- - (non-kenel) Averaged Perceptron for binary classification
+ - Averaged Perceptron for binary classification
+
+   non-kernelized version and kernelized version
+   (currently polynomial kernel only)
 
 * Requirements
 
- - gcc
- - swig
+ - gcc 4.3.2
+ - swig 1.3.35
 
 * Build & Install
 
 ** C++ library
 
-  Type 'make' at the top directory of tinyclassifier
+  1. Type 'make' at the top directory of tinyclassifier.
+
+  2. Copy 'lib/libtinyclassifier.so' and the header files in
+  'include/' to an appropriate directory included in LD_LIBRARY_PATH /
+  CPATH.
 
 ** SWIG bindings
 
-  Type 'make' at the directory 'swig'
+   1. Type 'make -C swig' at the top directory of tinyclassifier.
 
-* Samples
+* Usage
 
   See the tests included in the package for the examples of usage.
   Tests are included at 'test', 'swig/ruby/test', etc.

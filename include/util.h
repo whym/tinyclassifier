@@ -4,6 +4,9 @@
 #include <algorithm>
 #include <iterator>
 #include <iostream>
+#include <vector>
+#include <list>
+#include <set>
 
 #define VAR(var, val)  typeof(val) var(val)
 #define REF(var, val)  typeof(val)& var(val)
@@ -18,14 +21,14 @@
 template<typename T>
 T my_power(T base, size_t degree) {
   T ret = 1;
-  while (degree >= 2) {
-    if (degree %2 == 1) {
+  while (degree >= 1) {
+    if ((degree & 1) == 1) {
       ret *= base;
     }
-    base *= base; // base << 1; // for integer
-    degree /= 2;
-  }
-  return base;
+    base *= base;
+    degree >>= 1;
+ }
+  return ret;
 }
 
 template<typename Range>
@@ -41,10 +44,52 @@ std::ostream& print_range(std::ostream& s,
   } else {
     --last;
     s << lbrace;
-    std::copy(i, last, std::ostream_iterator<typename Range::value_type>(s, delim));
+    for ( ;i != last; ++i ) {
+      std::cout << *i << delim;
+    }
     return s << *last << rbrace;
   }
 }
 
+template<typename U, typename V>
+std::ostream& operator<<(std::ostream& s, const std::pair<U,V>& p) {
+  return s << "(" << p.first << "," << p.second << ")";
+}
+template<typename V>
+std::ostream& operator<<(std::ostream& s, const std::vector<V>& x) {
+  return print_range(s, x);
+}
+
+template<typename V>
+std::ostream& operator<<(std::ostream& s, const std::list<V>& x) {
+  return print_range(s, x);
+}
+template<typename V>
+std::ostream& operator<<(std::ostream& s, const std::set<V>& x) {
+  return print_range(s, x);
+}
+
+// iterator
+template<typename I>
+std::ostream& print_iterator_value(std::ostream& s, const I& it) {
+  return s << "&(" << *it << ")";
+}
+
+template<typename V>
+std::ostream& operator<<(std::ostream& s, const typename std::vector<V>::const_iterator& x) {
+  return print_iterator_value(s, x);
+}
+template<typename V>
+std::ostream& operator<<(std::ostream& s, const typename std::list<V>::const_iterator& x) {
+  return print_iterator_value(s, x);
+}
+template<typename V>
+std::ostream& operator<<(std::ostream& s, const typename std::set<V>::const_iterator& x) {
+  return print_iterator_value(s, x);
+}
+template<typename V>
+std::ostream& operator<<(std::ostream& s, const std::_Rb_tree_const_iterator<V>& x) {
+  return print_iterator_value(s, x);
+}
 
 #endif // _TINYCLASSIFIER_UTIL_H

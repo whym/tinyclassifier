@@ -1,0 +1,7 @@
+*.o
+*.so
+.depend.makefile
+*_wrap.cxx
+Makefile.old
+\#*
+swig/*/Makefile

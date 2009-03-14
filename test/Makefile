@@ -1,12 +1,22 @@
-CXXFLAGS := $(CXXFLAGS) -I../include -L../lib -ltinyclassifier -lstdc++
+CXXFLAGS := $(CXXFLAGS) -I../include -L../lib -ltinyclassifier -lstdc++ -Wall
 CC := $(CXX)
+SOURCES = sample.cc
+HEADERS = ../include/*.h
+DEPFILE = .depend.makefile
 
 all: .succeed
 .succeed: sample
-	./run_tests.sh && touch $@
+	./run_tests.sh
 sample: sample.o ../lib/libtinyclassifier.so
 	$(CXX) $(CXXFLAGS) -o $@ $<
-%o: %.cc ../include/perceptron.h
+%o: %.cc
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 clean:
-	-rm  sample sample.o
+	-rm  sample sample.o $(DEPFILE)
+
+depend: $(DEPFILE)
+$(DEPFILE): $(SOURCES) $(HEADERS)
+	makedepend -f- -- $(CXXFLAGS) -- $(SOURCES) $(HEADERS) > $@ 2> /dev/null
+
+# NOTE: run make depend first (for resolving header file dependencies)
+include $(DEPFILE)
