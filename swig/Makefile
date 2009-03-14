@@ -16,7 +16,7 @@ ruby/$(SWIGNAME)_wrap.cxx: $(SWIGNAME).i $(HEADERS)
 perl/$(SWIGNAME)_wrap.cxx: $(SWIGNAME).i $(HEADERS)
 	swig $(CXXFLAGS) -c++ -perl -o $@ -shadow $<
 .perl: perl/$(SWIGNAME)_wrap.cxx
-	cd perl && make && make
+	cd perl && perl Makefile.PL && make
 
 python/$(SWIGNAME)_wrap.cxx: $(SWIGNAME).i $(HEADERS)
 	swig $(CXXFLAGS) -c++ -python -o $@ -shadow $<
