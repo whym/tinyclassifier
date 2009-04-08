@@ -1,4 +1,4 @@
-%module tinyclassifier
+%module TinyClassifier
 %{
  #include "tinyclassifier.h"
  #include "perceptron.h"

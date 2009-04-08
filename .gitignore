@@ -4,4 +4,9 @@
 *_wrap.cxx
 Makefile.old
 \#*
-swig/*/Makefile
+swig/perl/Makefile
+swig/python/Makefile
+swig/ruby/Makefile
+mkmf.log
+*.pyc
+*.bs

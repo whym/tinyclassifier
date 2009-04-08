@@ -1,4 +1,4 @@
-CXXFLAGS := $(CXXFLAGS) -I../include -L../lib -ltinyclassifier -lstdc++ -Wall
+CXXFLAGS := $(CXXFLAGS) -I../include -L../lib -lstdc++ -Wall
 CC := $(CXX)
 SOURCES = sample.cc
 HEADERS = ../include/*.h
@@ -7,7 +7,7 @@ DEPFILE = .depend.makefile
 all: .succeed
 .succeed: sample
 	./run_tests.sh
-sample: sample.o ../lib/libtinyclassifier.so
+sample: sample.o
 	$(CXX) $(CXXFLAGS) -o $@ $<
 %o: %.cc
 	$(CXX) $(CXXFLAGS) -c -o $@ $<

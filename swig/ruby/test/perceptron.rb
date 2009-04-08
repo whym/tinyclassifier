@@ -1,5 +1,5 @@
 require 'test/unit'
-require 'tinyclassifier'
+require 'TinyClassifier'
 
 class Numeric
   def polarity
@@ -7,7 +7,7 @@ class Numeric
   end
 end
 class TC_Perceptron < Test::Unit::TestCase
-  include Tinyclassifier
+  include TinyClassifier
 
   VECT = [1,3,4]
   MAT  = [[10,20,30],[40,50,60]]
