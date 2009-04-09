@@ -1,4 +1,4 @@
-Tinyclassifier - a tiny machine learning library for scripting
+TinyClassifier - a tiny machine learning library for scripting
 
 * Overview
 
@@ -18,8 +18,8 @@ Tinyclassifier - a tiny machine learning library for scripting
 
 * Requirements
 
- - gcc 4.3.2
- - swig 1.3.35
+ - gcc 4.3 (possibly gcc 4.x)
+ - swig 1.3.35 (possibly swig 1.3.x)
 
 * Build & Install
 
@@ -34,6 +34,13 @@ Tinyclassifier - a tiny machine learning library for scripting
 ** SWIG bindings
 
    1. Type 'make -C swig' at the top directory of tinyclassifier.
+
+   2. (for Ruby) Go to the directory 'swig/ruby' and type 'make
+      install'.
+      
+      For some language bindings, you might have to manually install
+      library files.
+      # to be prepared
 
 * Usage
 
