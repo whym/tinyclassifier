@@ -9,26 +9,26 @@ all: depend build test
 build: .ruby .perl .python
 
 ruby/$(SWIGNAME)_wrap.cxx: $(SWIGNAME).i $(HEADERS)
-	swig $(CXXFLAGS) -c++ -ruby -o $@ $<
+	$(SWIG) $(CXXFLAGS) -c++ -ruby -o $@ $<
 .ruby: ruby/$(SWIGNAME)_wrap.cxx
-	cd ruby && ruby extconf.rb && make
+	cd ruby && ruby extconf.rb && $(MAKE)
 
 perl/$(SWIGNAME)_wrap.cxx: $(SWIGNAME).i $(HEADERS)
-	swig $(CXXFLAGS) -c++ -perl -o $@ -shadow $<
+	$(SWIG) $(CXXFLAGS) -c++ -perl -o $@ -shadow $<
 .perl: perl/$(SWIGNAME)_wrap.cxx
-	cd perl && perl Makefile.PL && make
+	cd perl && perl Makefile.PL && $(MAKE) LD_RUN_PATH=""
 
 python/$(SWIGNAME)_wrap.cxx: $(SWIGNAME).i $(HEADERS)
-	swig $(CXXFLAGS) -c++ -python -o $@ -shadow $<
+	$(SWIG) $(CXXFLAGS) -c++ -python -o $@ -shadow $<
 .python: python/$(SWIGNAME)_wrap.cxx
 	cd python && python setup.py build
 
 java/$(SWIGNAME)_wrap.cxx: $(SWIGNAME).i $(HEADERS)
-	swig $(CXXFLAGS) -c++ -java -o $@ -package com.github.whym -shadow $<
+	$(SWIG) $(CXXFLAGS) -c++ -java -o $@ -package com.github.whym -shadow $<
 	mkdir -p ./java/com/github/whym
 	mv -f java/*.java ./java/com/github/whym
 .java: java/$(SWIGNAME)_wrap.cxx
-	cd java && make
+	cd java && $(MAKE)
 
 depend: $(DEPFILE)
 $(DEPFILE): $(SOURCES) $(HEADERS)
@@ -36,15 +36,15 @@ $(DEPFILE): $(SOURCES) $(HEADERS)
 
 clean:
 	-rm $(DEPFILE) */$(SWIGNAME)_wrap.cxx
-	make -C ruby   $@
-	make -C perl   $@
-	make -C python $@
-	make -C java   $@
+	$(MAKE) -C ruby   $@
+	$(MAKE) -C perl   $@
+	$(MAKE) -C python $@
+	$(MAKE) -C java   $@
 test:
 	cd ruby   && sh ./run_tests.sh
 	cd perl   && sh ./run_tests.sh
 	cd python && sh ./run_tests.sh
-	cd java   && sh ./run_tests.sh
+	$(MAKE) -C java $@
 
 # NOTE: run make depend first (for resolving header file dependencies)
 include $(DEPFILE)
