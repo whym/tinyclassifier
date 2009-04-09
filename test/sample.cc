@@ -15,6 +15,7 @@ int main() {
     cout << my_power(10,3) << endl;
     return 1;
   }
+  typedef int feature_value_t;
   Perceptron<feature_value_t> perc(3);
   perc.iterations = 20;
   vector<feature_value_t> v;

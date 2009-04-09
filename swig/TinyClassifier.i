@@ -8,8 +8,10 @@
 %include "std_vector.i"
 namespace std {
   %template(IntVector) vector<int>;
+  %template(FloatVector) vector<double>;
   %template(BoolVector) vector<bool>;
   %template(IntVectorVector) vector<vector<int> >;
+  %template(FloatVectorVector) vector<vector<double> >;
 };
 
 %include util.h
