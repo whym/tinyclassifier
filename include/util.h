@@ -75,6 +75,7 @@ std::ostream& print_iterator_value(std::ostream& s, const I& it) {
   return s << "&(" << *it << ")";
 }
 
+#ifdef DEBUG
 template<typename V>
 std::ostream& operator<<(std::ostream& s, const typename std::vector<V>::const_iterator& x) {
   return print_iterator_value(s, x);
@@ -87,5 +88,10 @@ template<typename V>
 std::ostream& operator<<(std::ostream& s, const typename std::set<V>::const_iterator& x) {
   return print_iterator_value(s, x);
 }
+template<typename V>
+std::ostream& operator<<(std::ostream& s, const std::_Rb_tree_const_iterator<V>& x) {
+  return print_iterator_value(s, x);
+}
+#endif
 
 #endif // _TINYCLASSIFIER_UTIL_H
