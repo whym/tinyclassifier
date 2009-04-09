@@ -45,7 +45,7 @@ class TC_Perceptron < Test::Unit::TestCase
   end
   def test_power
     assert_equal(11**2, power_int(11,2))
-    a = 5.times.map
+    a = (0..4).to_a
     assert_equal(a.map{|x| 2**x}, a.map{|x| power_int(2,x)})
     assert_equal((100*(0.11**2)).to_i, (100*power_float(0.11,2)).to_i)
   end
