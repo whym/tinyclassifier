@@ -36,7 +36,7 @@ class TC_Perceptron < Test::Unit::TestCase
 
   def test_poly_kernel
     x = IntVector.new(VECT)
-    p = IntPerceptron.new(x.size)
+    p = IntPKPerceptron.new(x.size)
     assert_equal((VECT.inject{|mem,y| mem + y*y}+1)**2,
                  p.kernel(x,x))
   end
@@ -51,29 +51,26 @@ class TC_Perceptron < Test::Unit::TestCase
   end
 
   def test_train
-    p = IntPerceptron.new(SAMPLES.keys[0].length)
-    keys = SAMPLES.keys.sort
-    p.train0(IntVectorVector.new(keys),
-             IntVector.new(keys.map{|x| SAMPLES[x]}))
-    assert_equal(keys.map{|k| [k, SAMPLES[k]]},
-                 keys.map do |k|
-                   pred = p.predict0(k)
-                   [k, pred.polarity]
-                 end)
+    [IntPerceptron.new(SAMPLES.keys[0].length, 10),
+     IntPKPerceptron.new(SAMPLES.keys[0].length, 10)].each do |p|
+      keys = SAMPLES.keys.sort
+      p.train(IntVectorVector.new(keys),
+              IntVector.new(keys.map{|x| SAMPLES[x]}))
+      assert_equal(keys.map{|k| [k, SAMPLES[k]]},
+                   keys.map do |k|
+                   pred = p.predict(k)
+                     [k, pred.polarity]
+                   end)
+    end
   end
   def test_train_big
     setup_samples
-    p = IntPerceptron.new(@samples[0].size, 100)
-    p.train0(@samples, @labels)
-    assert_equal((0..@samples.size-1).map{|i| [@samples[i], @labels[i]]},
-                 (0..@samples.size-1).map{|i| [@samples[i], p.predict0(@samples[i]).polarity]})
-  end
 
-  def test_train_big_kernel
-    setup_samples
-    p = IntPerceptron.new(@samples[0].size, 100)
-    p.train(@samples, @labels)
-    assert_equal((0..@samples.size-1).map{|i| [@samples[i], @labels[i]]},
-                 (0..@samples.size-1).map{|i| [@samples[i], p.predict(@samples[i]).polarity]})
+    [IntPerceptron.new(@samples[0].length, 100),
+     IntPKPerceptron.new(@samples[0].length, 100)].each do |p|
+      p.train(@samples, @labels)
+      assert_equal((0..@samples.size-1).map{|i| [@samples[i], @labels[i]]},
+                   (0..@samples.size-1).map{|i| [@samples[i], p.predict(@samples[i]).polarity]})
+    end
   end
 end

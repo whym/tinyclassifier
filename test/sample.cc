@@ -16,13 +16,17 @@ int main() {
     return 1;
   }
   typedef int feature_value_t;
-  Perceptron<feature_value_t> perc(3);
+  typedef double real_t;
+
+  Perceptron<feature_value_t, real_t> perc(3);
+  PKPerceptron<feature_value_t, real_t> kperc(3);
   perc.iterations = 20;
+  kperc.iterations = 20;
   vector<feature_value_t> v;
   v.push_back(10);
   v.push_back(20);
   v.push_back(30);
-  VAR(result, perc.kernel(v,v));
+  VAR(result, kperc.kernel(v,v));
   std::cout << result << std::endl;
   if ( result != my_power(10*10 + 20*20 + 30*30 + 1, 2) ) {
     return 1;
@@ -51,14 +55,6 @@ int main() {
   b.push_back(+1);
   b.push_back(-1);
 
-  perc.train0(samples, b);
-  for ( size_t i = 0; i < samples.size(); ++i ) {
-    real_t res = perc.predict0(samples[i]);
-    cout << res << endl;
-    if ( b[i] * res < 0 ) {
-      return 1;
-    }
-  }
   perc.train(samples, b);
   for ( size_t i = 0; i < samples.size(); ++i ) {
     real_t res = perc.predict(samples[i]);
@@ -67,11 +63,19 @@ int main() {
       return 1;
     }
   }
-  perc.kernel_order = 3;
-  perc.kernel_bias = 1;
-  perc.train(samples, b);
+  kperc.train(samples, b);
   for ( size_t i = 0; i < samples.size(); ++i ) {
-    real_t res = perc.predict(samples[i]);
+    real_t res = kperc.predict(samples[i]);
+    cout << res << endl;
+    if ( b[i] * res < 0 ) {
+      return 1;
+    }
+  }
+  kperc.kernel_order = 3;
+  kperc.kernel_bias = 1;
+  kperc.train(samples, b);
+  for ( size_t i = 0; i < samples.size(); ++i ) {
+    real_t res = kperc.predict(samples[i]);
     cout << res << endl;
     if ( b[i] * res < 0 ) {
       return 1;

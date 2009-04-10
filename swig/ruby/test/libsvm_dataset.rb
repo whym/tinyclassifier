@@ -31,13 +31,13 @@ class TC_LibSVM_Dataset < Test::Unit::TestCase
     return [labels, vectors]
   end
 
-  def _test_libsvm(train, test, dim)
+  def _test_libsvm(perp, train, test, dim)
     require 'open-uri'
-    labels, vectors = *libsvm_to_vec(open(train), dim)
+    require 'stringio'
+    labels, vectors = *libsvm_to_vec(StringIO.new(open(train).to_a.shuffle.join), dim)
     STDERR.puts "training data size = #{labels.size}"
-    perp = FloatPerceptron.new(dim)
-    perp.kernel_order = 5
-    perp.train0(vectors, labels)
+    itr = perp.train(vectors, labels)
+    STDERR.puts "iterations #{itr}"
 
     pn = {
       true  => {:p => 0, :n => 0},
@@ -45,16 +45,22 @@ class TC_LibSVM_Dataset < Test::Unit::TestCase
     }
     i = 0
     libsvm_to_vec(open(test), dim) do |lab, vec|
-      correct = lab * perp.predict0(FloatVector.new(vec)) > 0
+      correct = lab * perp.predict(FloatVector.new(vec)) > 0
       #puts "##{i+=1} #{correct}"
       pn[correct][lab > 0? :p : :n] += 1
     end
     puts pn.inspect
   end
 
-  def test_libsvm1
-    _test_libsvm('http://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/binary/a3a',
-                 'http://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/binary/a3a.t',
-                 123)
+  def test_libsvm
+    dim, data_tr, data_ts = *[123,
+                              'http://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/binary/a1a',
+                              'http://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/binary/a1a.t']
+    srand(1029)
+    [FloatPerceptron.new(dim, 5),
+     FloatPKPerceptron.new(dim, 5, 3),
+     FloatPKPerceptron.new(dim, 5, 5)].each do |p|
+      _test_libsvm(p, data_tr, data_ts, dim)
+    end
   end
 end

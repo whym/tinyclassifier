@@ -31,6 +31,12 @@ TinyClassifier - a tiny machine learning library for scripting
   'include/' to an appropriate directory included in LD_LIBRARY_PATH /
   CPATH.
 
+*** Recommended compile options
+
+    For a multicore processor,
+
+        CXXFLAGS="-ftree-vectorizer-verbose=1 -msse2 -ftree-vectorize -O3"
+
 ** SWIG bindings
 
    1. Type 'make -C swig' at the top directory of tinyclassifier.

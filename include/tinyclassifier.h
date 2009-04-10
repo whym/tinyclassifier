@@ -3,6 +3,5 @@
 
 #include <stdint.h>
 #include "util.h"
-typedef double  real_t;
 
 #endif // _TINYCLASSIFIER_H

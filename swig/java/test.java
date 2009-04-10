@@ -5,7 +5,7 @@ public class test {
     System.loadLibrary("TinyClassifier");
   }
   public static void main(String[] args) {
-    IntPerceptron p = new IntPerceptron(3);
+    IntPKPerceptron p = new IntPKPerceptron(3);
     System.out.println(""+p.getKernel_order());
   }
 }
