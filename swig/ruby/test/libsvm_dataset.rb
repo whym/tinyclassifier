@@ -4,8 +4,14 @@ require 'TinyClassifier'
 # see below for datasets
 # http://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/
 
+require 'open-uri'
+require 'stringio'
 class TC_LibSVM_Dataset < Test::Unit::TestCase
   include TinyClassifier
+
+  DIM = 123
+  DATA_TR = open('http://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/binary/a1a').to_a.join
+  DATA_TS = open('http://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/binary/a1a.t').to_a.join
 
   def libsvm_to_vec(io, dim, &block)
     labels  = IntVector.new
@@ -34,33 +40,39 @@ class TC_LibSVM_Dataset < Test::Unit::TestCase
   def _test_libsvm(perp, train, test, dim)
     require 'open-uri'
     require 'stringio'
-    labels, vectors = *libsvm_to_vec(StringIO.new(open(train).to_a.shuffle.join), dim)
+
+    train,test = *([train,test].map{|x| if x.is_a? String then StringIO.new(x)
+                                        else x
+                                        end})
+    train = StringIO.new(train.to_a.shuffle.join)
+    labels, vectors = *libsvm_to_vec(train, dim)
     STDERR.puts "training data size = #{labels.size}"
     itr = perp.train(vectors, labels)
-    STDERR.puts "iterations #{itr}"
+    STDERR.puts "iterations = #{itr}"
 
     pn = {
       true  => {:p => 0, :n => 0},
       false => {:p => 0, :n => 0}
     }
-    i = 0
-    libsvm_to_vec(open(test), dim) do |lab, vec|
-      correct = lab * perp.predict(FloatVector.new(vec)) > 0
+    libsvm_to_vec(test, dim) do |lab, vec|
+      pred = perp.predict(vec)
+      correct = lab * pred > 0
       #puts "##{i+=1} #{correct}"
       pn[correct][lab > 0? :p : :n] += 1
     end
-    puts pn.inspect
+    STDERR.puts pn.inspect
+    prec = pn[true][:p].to_f / (pn[true][:p] + pn[false][:p])
+    reca = pn[true][:p].to_f / (pn[true][:p] + pn[false][:n])
+    STDERR.puts "fmeasure = #{1.0 / (0.5/prec + 0.5/reca)}"
   end
 
-  def test_libsvm
-    dim, data_tr, data_ts = *[123,
-                              'http://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/binary/a1a',
-                              'http://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/binary/a1a.t']
-    srand(1029)
-    [FloatPerceptron.new(dim, 5),
-     FloatPKPerceptron.new(dim, 5, 3),
-     FloatPKPerceptron.new(dim, 5, 5)].each do |p|
-      _test_libsvm(p, data_tr, data_ts, dim)
+  def test_libsvm1
+    [FloatPerceptron.new(DIM, 4),
+     FloatPKPerceptron.new(DIM, 4, 1, 0),
+     FloatPKPerceptron.new(DIM, 4, 4, 1),
+     FloatPKPerceptron.new(DIM, 4, 5, 1)].each do |p|
+      srand(1029)
+      _test_libsvm(p, DATA_TR, DATA_TS, DIM)
     end
   end
 end

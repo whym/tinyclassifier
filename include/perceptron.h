@@ -128,9 +128,9 @@ private:
 
 public:
 
-  PKPerceptron(size_t size_, size_t iter=40, size_t order=2)
+  PKPerceptron(size_t size_, size_t iter=40, size_t order=2, feature_value_t bias=1)
     : Perceptron<feature_value_t, real_t, polarity_t>(size_, iter), kernel_order(order),
-      kernel_bias(static_cast<feature_value_t>(1)) {
+      kernel_bias(bias) {
     init();
   }
   ~PKPerceptron() {
@@ -199,12 +199,14 @@ public:
     real_t ret = static_cast<real_t>(this->bias);
     FOREACH(it, this->weighted_bases){
       PAIRREF(w, bvecp, *it);
-      ret += w * static_cast<real_t>(kernel(*bvecp, v));
+      if ( w != 0 )             // TODO: not type safe
+        ret += w * static_cast<real_t>(kernel(*bvecp, v));
     }
     ret *= this->averaging_count;
     FOREACH(it, this->weighted_bases_avg){
       PAIRREF(w, bvecp, *it);
-      ret -= w * static_cast<real_t>(kernel(*bvecp, v));
+      if ( w != 0 )
+        ret -= w * static_cast<real_t>(kernel(*bvecp, v));
     }
     ret -= this->bias_avg;
     return ret;

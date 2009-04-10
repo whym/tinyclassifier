@@ -11,6 +11,6 @@ WriteMakefile(
     LINKTYPE=> q{dynamic},
     NAME   => qq{$swigname},
     OBJECT => qq{${swigname}_wrap.o},
-              CCFLAGS => q{-Wall -shared -fno-strict-aliasing},
+              CCFLAGS => qq{-Wall -shared -fno-strict-aliasing $ENV{CFLAGS} $ENV{CXXFLAGS}},
     clean => {FILES => "${swigname}_wrap.cxx"}
     );
