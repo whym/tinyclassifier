@@ -61,9 +61,12 @@ class TC_LibSVM_Dataset < Test::Unit::TestCase
       pn[correct][lab > 0? :p : :n] += 1
     end
     STDERR.puts pn.inspect
+    STDERR.puts "accuracy   = #{(pn[true][:p].to_f + pn[true][:n]) / (pn[true][:p] + pn[true][:n] + pn[false][:p] + pn[false][:n])}"
     prec = pn[true][:p].to_f / (pn[true][:p] + pn[false][:p])
     reca = pn[true][:p].to_f / (pn[true][:p] + pn[false][:n])
-    STDERR.puts "fmeasure = #{1.0 / (0.5/prec + 0.5/reca)}"
+    STDERR.puts "precision = #{prec}"
+    STDERR.puts "recall    = #{reca}"
+    STDERR.puts "fmeasure  = #{1.0 / (0.5/prec + 0.5/reca)}"
   end
 
   def test_libsvm1

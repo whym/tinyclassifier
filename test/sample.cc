@@ -2,10 +2,23 @@
 #include "tinyclassifier.h"
 #include "perceptron.h"
 #include "util.h"
+#include "lru_cache.h"
 #include <vector>
+#include <functional>
+
+struct Func {
+  int produce(const std::pair<int,int>& p) const { return p.first * p.first + p.second; }
+};
 
 int main() {
   using namespace std;
+  LRUCache<pair<int,int>, int, Func> cache(Func(), 3);
+  bool hit;
+  cache.get(make_pair(100,100), hit);  cout << hit << endl;
+  cache.get(make_pair(10,10), hit);  cout << hit << endl;
+  cache.get(make_pair(100,100), hit);  cout << hit << endl;
+  cache.get(make_pair(2,2), hit);  cout << hit << endl;
+  cache.get(make_pair(1,1), hit);  cout << hit << endl;
 
   if ( 10*10*10*10*10 != my_power(10,5) ) {
     cout << my_power(10,5) << endl;
@@ -58,7 +71,7 @@ int main() {
   perc.train(samples, b);
   for ( size_t i = 0; i < samples.size(); ++i ) {
     real_t res = perc.predict(samples[i]);
-    cout << res << endl;
+    cout << b[i] << "? " <<  res << endl;
     if ( b[i] * res < 0 ) {
       return 1;
     }
@@ -66,7 +79,7 @@ int main() {
   kperc.train(samples, b);
   for ( size_t i = 0; i < samples.size(); ++i ) {
     real_t res = kperc.predict(samples[i]);
-    cout << res << endl;
+    cout << b[i] << "? " << res << endl;
     if ( b[i] * res < 0 ) {
       return 1;
     }
@@ -76,7 +89,7 @@ int main() {
   kperc.train(samples, b);
   for ( size_t i = 0; i < samples.size(); ++i ) {
     real_t res = kperc.predict(samples[i]);
-    cout << res << endl;
+    cout << b[i] << "? " << res << endl;
     if ( b[i] * res < 0 ) {
       return 1;
     }
