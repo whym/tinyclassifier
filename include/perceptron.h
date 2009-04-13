@@ -58,10 +58,10 @@ public:
     size_t i;
     for ( i = 0; i < this->iterations; ++i ) {
 #ifdef DEBUG
-      std::cout << i <<' '<< this->averaging_count <<' '<< this->bias <<' '<< this->bias_avg;
-      std::cout << this->weights;
-      std::cout << this->weights_avg;
-      std::cout << std::endl;
+      std::cerr << i <<' '<< this->averaging_count <<' '<< this->bias <<' '<< this->bias_avg;
+      std::cerr << this->weights;
+      std::cerr << this->weights_avg;
+      std::cerr << std::endl;
 #endif
       bool no_change = true;
       for ( size_t j = 0; j < samples.size(); ++j ) {
@@ -128,20 +128,23 @@ template <typename feature_value_t, typename real_t=double, typename polarity_t=
 public:
   size_t kernel_order;
   feature_value_t kernel_bias;
+  typedef size_t cache_size_t;
 private:
   typedef typename std::set<std::vector<feature_value_t> >::const_pointer base_pointer_type;
   std::set<std::vector<feature_value_t> > bases;
-  std::vector<std::pair<delta_t, base_pointer_type> > weighted_bases;
-  std::vector<std::pair<delta_t, base_pointer_type> > weighted_bases_avg;
-  mutable      LRUCache<std::pair<base_pointer_type,base_pointer_type>, feature_value_t, PKPerceptron<feature_value_t, real_t, polarity_t, delta_t> > cache;
-  friend class LRUCache<std::pair<base_pointer_type,base_pointer_type>, feature_value_t, PKPerceptron<feature_value_t, real_t, polarity_t, delta_t> >;
+  std::vector<base_pointer_type> base_pointers;
+  std::vector<std::pair<delta_t, size_t> > weighted_bases;
+  std::vector<std::pair<delta_t, size_t> > weighted_bases_avg;
+  typedef unsigned long cache_key_t;
+  mutable      LRUCache<cache_key_t, feature_value_t, PKPerceptron<feature_value_t, real_t, polarity_t, delta_t> > cache;
+  friend class LRUCache<cache_key_t, feature_value_t, PKPerceptron<feature_value_t, real_t, polarity_t, delta_t> >;
  // TODO: 重複したサンプルの重みも共有すべき？（現状は別々に扱う）
 
 public:
 
-  PKPerceptron(size_t size_, size_t iter=40, size_t order=2, feature_value_t bias=1)
+  PKPerceptron(size_t size_, size_t iter=40, size_t order=2, feature_value_t bias=1, cache_size_t cache_size=0)
     : Perceptron<feature_value_t, real_t, polarity_t>(size_, iter), kernel_order(order),
-      kernel_bias(bias), cache(*this, 1024) {
+      kernel_bias(bias), cache(*this, cache_size) {
     init();
   }
   ~PKPerceptron() {
@@ -155,15 +158,39 @@ public:
     this->bias = 0.0;
     this->bias_avg = 0.0;
     this->cache.init();
+    this->base_pointers.clear();
   }
 
-  void set_cach_size(size_t i) {
+  void set_cache_size(cache_size_t i) {
     this->cache.set_size(i);
   }
 
 private:
-  feature_value_t produce(const std::pair<base_pointer_type,base_pointer_type>& p) const {
-    return kernel(*(p.first), *(p.second));
+  inline size_t decode_x(cache_key_t p) const {
+    return p / this->base_pointers.size();
+  }
+  inline size_t decode_y(cache_key_t p) const {
+    return p % this->base_pointers.size();
+  }
+  inline cache_key_t encode_xy(size_t x, size_t y) const {
+    if ( x > y ) {
+      size_t t = x;
+      x = y;
+      y = t;
+    }
+    return static_cast<cache_key_t>(x) * this->base_pointers.size() + y;
+  }
+
+  feature_value_t produce(const cache_key_t& p) const {
+//     std::cerr << "produce(): 1, "  << this->base_pointers.size() << ": "<< p <<", "<<decode_x(p) << ", " << decode_y(p) << std::endl; //!
+//     std::cerr << (this->base_pointers[decode_x(p)]) << std::endl;//!
+//     std::cerr << (this->base_pointers[decode_y(p)]) << std::endl;//!
+//     std::cerr << *(this->base_pointers[decode_x(p)]) << std::endl;//!
+//     std::cerr << *(this->base_pointers[decode_y(p)]) << std::endl;//!
+
+    feature_value_t v = kernel(*(this->base_pointers[decode_x(p)]),
+                               *(this->base_pointers[decode_y(p)]));
+    return v;
   }
   
 public:
@@ -175,26 +202,37 @@ public:
   size_t train(const std::vector< std::vector< feature_value_t> >& samples,
                const std::vector< polarity_t >& sample_labels) {
     this->init();
-    FOREACH(it, samples) check_feature_vector(*it);
 
     FOREACH(it, samples) {
+      check_feature_vector(*it);
+
       VAR(p, this->bases.insert(*it));
-      VAR(basep, &(*p.first));
-      this->weighted_bases.push_back(std::make_pair(static_cast<real_t>(0), basep));
-      this->weighted_bases_avg.push_back(std::make_pair(static_cast<real_t>(0), basep));
+      VAR(basep, &(*(p.first)));
+      this->weighted_bases.push_back(std::make_pair(static_cast<real_t>(0), this->base_pointers.size()));
+      this->weighted_bases_avg.push_back(std::make_pair(static_cast<real_t>(0), this->base_pointers.size()));
+      this->base_pointers.push_back(basep);
     }
     size_t i;
     for ( i = 0; i < this->iterations; ++i ) {
 #ifdef DEBUG
-      std::cout <<"train: " << i <<' '<< this->averaging_count <<' '<< this->bias <<' '<< this->bias_avg << this->weighted_bases << std::endl;
+      std::cerr <<"train: " << i <<' '<< this->averaging_count <<' '<< this->bias <<' '<< this->bias_avg << this->weighted_bases << std::endl;
 #endif
       bool no_change = true;
       for ( size_t j = 0; j < samples.size(); ++j ) {
         VAR(given_polarity, sample_labels[j]);
-        VAR(prediction, this->predict_of_base((this->weighted_bases[j].second)));
+        VAR(base_index, this->weighted_bases[j].second);
 #ifdef DEBUG
-        if ( this->predict(*(this->weighted_bases[j].second)) != prediction ) {
-          std::cout << "predict and predict_of_base dont't match" << std::endl;
+        std::cerr <<"train: " << i << " " << j << " " << base_index << std::endl;
+#endif
+        VAR(prediction, this->cache.get_size() == 0 ?
+            this->predict(*(this->base_pointers[base_index])):
+            this->predict_of_base(base_index));
+#ifdef DEBUG
+        {
+          real_t b = this->predict(*(this->base_pointers[base_index]));
+          if ( b != prediction ) {
+            std::cerr << "predict and predict_of_base don't match: " << b << ", " << prediction <<  std::endl;
+          }
         }
 #endif
         if (! (given_polarity * prediction > 0) ) { // TODO: ignore the difference within threshold
@@ -208,7 +246,7 @@ public:
       }
       if ( no_change && this->check_convergence ) {
 #ifdef DEBUG
-        std::cout << "terminate" << std::endl;
+        std::cerr << "terminate" << std::endl;
 #endif
         break;
       }
@@ -219,18 +257,6 @@ public:
 //     }
 //     this->bias -= static_cast<real_t>(this->bias_avg) / static_cast<real_t>(this->averaging_count);
 
-    FOREACH(it, this->weighted_bases){
-      VAR(w, it->first);
-      if ( w == 0 ) {
-        this->weighted_bases.erase(it);
-      }
-    }
-    FOREACH(it, this->weighted_bases_avg){
-      VAR(w, it->first);
-      if ( w == 0 ) {
-        this->weighted_bases_avg.erase(it);
-      }
-    }
     return i;
   }
   
@@ -240,13 +266,15 @@ public:
     // NOTE: note that this value is not normalized by averaging_count
     real_t ret = static_cast<real_t>(this->bias);
     FOREACH(it, this->weighted_bases){
-      PAIRREF(w, bvecp, *it);
+      PAIRREF(w, bveci, *it);
+      VAR(bvecp, this->base_pointers[bveci]);
       if ( w != 0 )             // TODO: not type safe
         ret += w * static_cast<real_t>(kernel(*bvecp, v));
     }
     ret *= this->averaging_count;
     FOREACH(it, this->weighted_bases_avg){
-      PAIRREF(w, bvecp, *it);
+      PAIRREF(w, bveci, *it);
+      VAR(bvecp, this->base_pointers[bveci]);
       if ( w != 0 )
         ret -= w * static_cast<real_t>(kernel(*bvecp, v));
     }
@@ -255,19 +283,19 @@ public:
   }
 
 private:
-  real_t predict_of_base(base_pointer_type basep) const {
+  real_t predict_of_base(size_t basei) const {
     real_t ret = static_cast<real_t>(this->bias);
     FOREACH(it, this->weighted_bases){
-      PAIRREF(w, bvecp, *it);
+      PAIRREF(w, bveci, *it);
       if ( w != 0 ) {
-        ret += w * static_cast<real_t>(this->cache.get(make_pair(bvecp, basep)));
+        ret += w * static_cast<real_t>(this->cache.get(encode_xy(bveci, basei)));
       }
     }
     ret *= this->averaging_count;
     FOREACH(it, this->weighted_bases_avg){
-      PAIRREF(w, bvecp, *it);
+      PAIRREF(w, bveci, *it);
       if ( w != 0 ) {
-        ret -= w * static_cast<real_t>(this->cache.get(make_pair(bvecp, basep)));
+        ret -= w * static_cast<real_t>(this->cache.get(encode_xy(bveci, basei)));
       }
     }
     ret -= this->bias_avg;

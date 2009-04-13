@@ -71,8 +71,7 @@ class TC_LibSVM_Dataset < Test::Unit::TestCase
 
   def test_libsvm1
     [FloatPerceptron.new(DIM, 4),
-     FloatPKPerceptron.new(DIM, 4, 1, 0),
-     FloatPKPerceptron.new(DIM, 4, 4, 1),
+     FloatPKPerceptron.new(DIM, 4, 1, 0, 1000*1000*100),
      FloatPKPerceptron.new(DIM, 4, 5, 1)].each do |p|
       srand(1029)
       _test_libsvm(p, DATA_TR, DATA_TS, DIM)

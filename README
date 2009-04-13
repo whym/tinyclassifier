@@ -9,12 +9,38 @@ TinyClassifier - a tiny machine learning library for scripting
  - Efficient and compact implementation with C++
  - Interfaces to ruby, perl, python, etc. via SWIG
 
-* Algorithms
+* Implemented algorithms
 
  - Averaged Perceptron for binary classification
 
    non-kernelized version and kernelized version
    (currently polynomial kernel only)
+
+* Sample usage
+
+** Ruby
+
+  require 'TinyClassifier'
+  include TinyClassifier
+
+  SAMPLES = {
+    [-2, +1, -1] => +1,
+    [-1, +2, +1] => +1,
+    [-1, -1, -1] => -1,
+    [+1, +1, -1] => +1,
+    [-1, +1, -1] => +1,
+    [+1, -2, -1] => -1,
+    [+1, -1, +1] => -1
+  }
+
+  keys = SAMPLES.keys.sort
+  p = IntPKPerceptron.new(SAMPLES.keys[0].length, 10)
+  p.train(IntVectorVector.new(keys),
+          IntVector.new(keys.map{|x| SAMPLES[x]}))
+  keys.each do |k|
+    pred = p.predict(k)
+    puts "#{SAMPLES[k]}: #{pred}"
+  end
 
 * Requirements
 

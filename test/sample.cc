@@ -10,6 +10,17 @@ struct Func {
   int produce(const std::pair<int,int>& p) const { return p.first * p.first + p.second; }
 };
 
+namespace std {
+ namespace tr1 {
+   template<>
+   struct hash<std::pair<int, int> > {
+     size_t operator()(const std::pair<int,int>& p) const {
+       return p.first * 10001 + p.second;
+     }
+   };
+ }
+}
+
 int main() {
   using namespace std;
   LRUCache<pair<int,int>, int, Func> cache(Func(), 3);
@@ -86,7 +97,12 @@ int main() {
   }
   kperc.kernel_order = 3;
   kperc.kernel_bias = 1;
-  kperc.train(samples, b);
+  kperc.iterations = 2000000;
+  kperc.check_convergence = false;
+  kperc.set_cache_size(1024*1024*100);
+  kperc.set_cache_size(0);
+  int its = kperc.train(samples, b);
+  cout << "iterations = " << its << endl;
   for ( size_t i = 0; i < samples.size(); ++i ) {
     real_t res = kperc.predict(samples[i]);
     cout << b[i] << "? " << res << endl;
