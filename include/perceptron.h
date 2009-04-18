@@ -168,9 +168,11 @@ public:
 private:
   inline size_t decode_x(cache_key_t p) const {
     return p / this->base_pointers.size();
+    //return p.first;
   }
   inline size_t decode_y(cache_key_t p) const {
     return p % this->base_pointers.size();
+    //return p.second;
   }
   inline cache_key_t encode_xy(size_t x, size_t y) const {
     if ( x > y ) {
@@ -215,15 +217,12 @@ public:
     size_t i;
     for ( i = 0; i < this->iterations; ++i ) {
 #ifdef DEBUG
-      std::cerr <<"train: " << i <<' '<< this->averaging_count <<' '<< this->bias <<' '<< this->bias_avg << this->weighted_bases << std::endl;
+      //      std::cerr <<"train: " << i <<' '<< this->averaging_count <<' '<< this->bias <<' '<< this->bias_avg << this->weighted_bases << std::endl;
 #endif
       bool no_change = true;
       for ( size_t j = 0; j < samples.size(); ++j ) {
         VAR(given_polarity, sample_labels[j]);
         VAR(base_index, this->weighted_bases[j].second);
-#ifdef DEBUG
-        std::cerr <<"train: " << i << " " << j << " " << base_index << std::endl;
-#endif
         VAR(prediction, this->cache.get_size() == 0 ?
             this->predict(*(this->base_pointers[base_index])):
             this->predict_of_base(base_index));

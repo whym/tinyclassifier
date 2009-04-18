@@ -21,9 +21,16 @@ private:
   cache_t cache;
   std::list<key_t> queue;
   const factory_t& factory;
+  int hits;
+  int misses;
 
 public:
-  LRUCache(const factory_t& fact, cache_size_t i = 1024) : max(i), factory(fact) {}
+  LRUCache(const factory_t& fact, cache_size_t i = 1024) :
+    max(i), factory(fact), hits(0), misses(0) {}
+
+  ~LRUCache(){
+    std::cerr << "lru_cache: hit=" << hits << ", miss="<<misses<<std::endl;
+  }
 
   void init() {
     queue.clear();
@@ -44,10 +51,11 @@ public:
   }
   inline value_t get(const key_t &k, bool& hit) {
 #ifdef DEBUG
-    std::cerr << "LRUCache: get(" << k << "), " << (cache.find(k)?"hit":"miss") << std::endl;
+    //    std::cerr << "LRUCache: get(" << k << "), " << (cache.find(k) != cache.end()?"hit":"miss") << std::endl;
 #endif
     typename cache_t::iterator iter = cache.find(k);
     if (iter != cache.end()) {
+      ++hits;
       return iter->second;
     } else {
       value_t v = factory.produce(k);
@@ -58,6 +66,7 @@ public:
         cache.erase(victim);
         queue.pop_back();
       }
+      ++misses;
       return v;
     }
   }

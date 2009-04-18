@@ -18,6 +18,12 @@ namespace std {
        return p.first * 10001 + p.second;
      }
    };
+   template<>
+   struct hash<std::pair<size_t, size_t> > {
+     size_t operator()(const std::pair<size_t,size_t>& p) const {
+       return p.first * 10001 + p.second;
+     }
+   };
  }
 }
 
@@ -97,10 +103,9 @@ int main() {
   }
   kperc.kernel_order = 3;
   kperc.kernel_bias = 1;
-  kperc.iterations = 2000000;
+  kperc.iterations = 200000;
   kperc.check_convergence = false;
-  kperc.set_cache_size(1024*1024*100);
-  kperc.set_cache_size(0);
+  kperc.set_cache_size(10000);
   int its = kperc.train(samples, b);
   cout << "iterations = " << its << endl;
   for ( size_t i = 0; i < samples.size(); ++i ) {
