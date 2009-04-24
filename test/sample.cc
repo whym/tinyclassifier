@@ -49,7 +49,7 @@ int main() {
   typedef double real_t;
 
   Perceptron<feature_value_t, real_t> perc(3);
-  PKPerceptron<feature_value_t, real_t> kperc(3);
+  PKPerceptron<feature_value_t, real_t, int, real_t> kperc(3);
   perc.iterations = 20;
   kperc.iterations = 20;
   vector<feature_value_t> v;
@@ -78,11 +78,15 @@ int main() {
   v.clear(); v.push_back(-1); v.push_back(+1); v.push_back(+1);
   samples.push_back(v);
 
+  v.clear(); v.push_back(-1); v.push_back(+1); v.push_back(+1);
+  samples.push_back(v);
+
   vector<int> b;
   b.push_back(-1);
   b.push_back(-1);
   b.push_back(+1);
   b.push_back(+1);
+  b.push_back(-1);
   b.push_back(-1);
 
   perc.train(samples, b);
@@ -103,6 +107,7 @@ int main() {
   }
   kperc.kernel_order = 3;
   kperc.kernel_bias = 1;
+  kperc.projection_threshold = 1;
   kperc.iterations = 200000;
   kperc.check_convergence = false;
   kperc.set_cache_size(10000);

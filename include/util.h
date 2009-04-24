@@ -45,7 +45,7 @@ std::ostream& print_range(std::ostream& s,
     --last;
     s << lbrace;
     for ( ;i != last; ++i ) {
-      std::cout << *i << delim;
+      s << *i << delim;
     }
     return s << *last << rbrace;
   }

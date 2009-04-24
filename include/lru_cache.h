@@ -8,8 +8,8 @@
 
 // based on http://www.koders.com/cpp/fid4C1FB5C18106581BF78EB2720ED01C2EFC1DD340.aspx?s=cdef%3atree+mdef%3ainsert
 
-// The requirement to user is:
-// - factory_t should implement 'produce' function, which convert key_t
+// The requirements to user are:
+// - factory_t should implement 'produce' function, which converts key_t
 //   to value_t
 // - key_t shuold be hashable/comparable, because we use it as map's key
 
@@ -29,7 +29,9 @@ public:
     max(i), factory(fact), hits(0), misses(0) {}
 
   ~LRUCache(){
+#ifdef DEBUG
     std::cerr << "lru_cache: hit=" << hits << ", miss="<<misses<<std::endl;
+#endif
   }
 
   void init() {

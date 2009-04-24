@@ -23,3 +23,5 @@ namespace std {
 %template(FloatPerceptron) Perceptron<double>;
 %template(IntPKPerceptron) PKPerceptron<int>;
 %template(FloatPKPerceptron) PKPerceptron<double>;
+%template(IntPKProjectron) PKPerceptron<int,double,int,double>;
+%template(FloatPKProjectron) PKPerceptron<double,double,int,double>;

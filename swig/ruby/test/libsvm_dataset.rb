@@ -6,12 +6,44 @@ require 'TinyClassifier'
 
 require 'open-uri'
 require 'stringio'
+require 'tempfile'
+require 'uri'
+def open_or_uri_open(target, &block)
+  filename = Dir.tmpdir + File::SEPARATOR + URI.encode(target, /#{URI::UNSAFE}|\//)
+  if !File.exists?(filename) then
+    open(filename,'w') do |io|
+      io.write open(target).read
+    end
+  end
+  if block then
+    open(filename) do |x|
+      yield x
+    end
+  else
+    return open(filename)
+  end
+end
+
+if Array.new.respond_to?(:shuffle) then
+  def Array.shuffle
+    a = self.clone
+    a.shuffle!
+    return a
+  end
+  def Array.shuffle!
+    (0..self.length-1).each do |x|
+      r = rand(self.length)
+      self[x], self[r] = self[r], self[x]
+    end
+  end
+end
+
 class TC_LibSVM_Dataset < Test::Unit::TestCase
   include TinyClassifier
 
   DIM = 123
-  DATA_TR = open('http://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/binary/a1a').to_a.join
-  DATA_TS = open('http://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/binary/a1a.t').to_a.join
+  DATA_TR = open_or_uri_open('http://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/binary/a1a').to_a.join
+  DATA_TS = open_or_uri_open('http://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/binary/a1a.t').to_a.join
 
   def libsvm_to_vec(io, dim, &block)
     labels  = IntVector.new
@@ -61,7 +93,7 @@ class TC_LibSVM_Dataset < Test::Unit::TestCase
       pn[correct][lab > 0? :p : :n] += 1
     end
     STDERR.puts pn.inspect
-    STDERR.puts "accuracy   = #{(pn[true][:p].to_f + pn[true][:n]) / (pn[true][:p] + pn[true][:n] + pn[false][:p] + pn[false][:n])}"
+    STDERR.puts "accuracy  = #{(pn[true][:p].to_f + pn[true][:n]) / (pn[true][:p] + pn[true][:n] + pn[false][:p] + pn[false][:n])}"
     prec = pn[true][:p].to_f / (pn[true][:p] + pn[false][:p])
     reca = pn[true][:p].to_f / (pn[true][:p] + pn[false][:n])
     STDERR.puts "precision = #{prec}"
@@ -71,8 +103,8 @@ class TC_LibSVM_Dataset < Test::Unit::TestCase
 
   def test_libsvm1
     [FloatPerceptron.new(DIM, 4),
-     FloatPKPerceptron.new(DIM, 4, 1, 0, 0),
-     FloatPKPerceptron.new(DIM, 4, 5, 1)].each do |p|
+     FloatPKProjectron.new(DIM, 4, 1, 0, 0, 0.8),
+     FloatPKPerceptron.new(DIM, 4, 5, 1, 0)].each do |p|
       srand(1029)
       _test_libsvm(p, DATA_TR, DATA_TS, DIM)
     end
