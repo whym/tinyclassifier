@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <iterator>
 #include <iostream>
+#include <sstream>
 #include <vector>
 #include <list>
 #include <set>
@@ -17,6 +18,9 @@
   VAR(__tmp_pair, (pair));                                              \
   REF(var1, __tmp_pair.first);                                          \
   REF(var2, __tmp_pair.second);
+#define STR(s)                                                          \
+  (dynamic_cast<std::ostringstream&>(std::ostringstream() << s)).str()
+
 
 template<typename T>
 T my_power(T base, size_t degree) {
@@ -95,3 +99,54 @@ std::ostream& operator<<(std::ostream& s, const std::_Rb_tree_const_iterator<V>&
 #endif
 
 #endif // _TINYCLASSIFIER_UTIL_H
+
+#ifdef TEST_TINYCLASSIFIER_UTIL_H
+#undef TEST_TINYCLASSIFIER_UTIL_H
+#include <iostream>
+
+using namespace std;
+
+bool succeed = true;
+
+static void ok(bool b, const char* name = "") {
+  static int n = 1;
+  printf("%s %d - %s\n", b ? "ok" : "ng", n++, name);
+  succeed = succeed && b;
+}
+template <typename T> void is(const T& x, const T& y, const char* name = "") {
+  if (x == y) {
+    ok(true, name);
+  } else {
+    ok(false, name);
+    cout << " expected: " << x << ", given: " << y << endl;
+  }
+}
+template <typename T> void equal(T f1, T l1, T f2, T l2, const char* name = "") {
+  if (equal(f1, l1, f2)) {
+    ok(true, name);
+  } else {
+    ok(false, name);
+    cout << " expected: ";
+    print_range(cout, f1, l1);
+    cout <<", given: ";
+    print_range(cout, f2, l2);
+    cout << "}" << endl;
+  }
+}
+
+int main() {
+  {
+    is(10*10*10*10*10, my_power(10,5), "my_power#1");
+    is(10*10*10, my_power(10,3), "my_power#2");
+  }
+
+  {
+    is(string("10"), STR(10), "STR#1");
+    is(string("-10.2"), STR(-10.2), "STR#2");
+    is(string("2 times"), STR(2 << " times"), "STR#3");
+    is(string("at 2:30"), string("at ") + STR(2 << ":" << 30), "STR#4");
+  }
+
+  return !succeed;
+}
+#endif

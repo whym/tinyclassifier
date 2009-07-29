@@ -79,6 +79,9 @@ class TC_LibSVM_Dataset < Test::Unit::TestCase
     train = StringIO.new(train.to_a.shuffle.join)
     labels, vectors = *libsvm_to_vec(train, dim)
     STDERR.puts "training data size = #{labels.size}"
+    if perp.respond_to?(:get_cache_size) then
+      STDERR.puts "cache size = #{perp.get_cache_size}"
+    end
     itr = perp.train(vectors, labels)
     STDERR.puts "iterations = #{itr}"
 

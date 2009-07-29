@@ -19,9 +19,9 @@ namespace std {
 %template(power_float) my_power<double>;
 %include tinyclassifier.h
 %include perceptron.h
-%template(IntPerceptron) Perceptron<int>;
-%template(FloatPerceptron) Perceptron<double>;
-%template(IntPKPerceptron) PKPerceptron<int>;
+%template(IntPerceptron)     Perceptron<int>;
+%template(FloatPerceptron)   Perceptron<double>;
+%template(IntPKPerceptron)   PKPerceptron<int>;
 %template(FloatPKPerceptron) PKPerceptron<double>;
-%template(IntPKProjectron) PKPerceptron<int,double,int,double>;
+%template(IntPKProjectron)   PKPerceptron<int,   double,int,double>;
 %template(FloatPKProjectron) PKPerceptron<double,double,int,double>;

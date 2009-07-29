@@ -2,14 +2,9 @@
 #define _TINYCLASSIFIER_PERCEPTRON_H !NULL
 
 #include <vector>
-#include "tinyclassifier.h"
-#include <vector>
 #include <iostream>
 #include <numeric>
 #include <set>
-
-#include "perceptron.h"
-#include "tinyclassifier.h"
 #include "util.h"
 #include "lru_cache.h"
 
@@ -46,7 +41,7 @@ public:
       delta(1), check_convergence(true) {
     init();
   }
-  ~Perceptron() {
+  virtual ~Perceptron() {
   }
   
   void init() {
@@ -161,7 +156,7 @@ public:
       kernel_bias(bias), projection_threshold(pth), cache(*this, cache_size) {
     init();
   }
-  ~PKPerceptron() {
+  virtual ~PKPerceptron() {
   }
   
   void init() {
@@ -176,8 +171,12 @@ public:
     this->norms.clear();
   }
 
-  void set_cache_size(cache_size_t i) {
+  void set_cache_size(cache_size_t i) const {
     this->cache.set_size(i);
+  }
+
+  int get_cache_size() const {
+    return this->cache.get_size();
   }
 
 private:
@@ -353,3 +352,124 @@ private:
 };
 
 #endif // _TINYCLASSIFIER_PERCEPTRON_H
+
+#ifdef TEST_TINYCLASSIFIER_PERCEPTRON_H
+#undef TEST_TINYCLASSIFIER_PERCEPTRON_H
+
+#include "util.h"
+#include <vector>
+#include <functional>
+
+using namespace std;
+
+bool succeed = true;
+
+static void ok(bool b, const char* name = "") {
+  static int n = 1;
+  printf("%s %d - %s\n", b ? "ok" : "ng", n++, name);
+  succeed = succeed && b;
+}
+template <typename T> void is(const T& x, const T& y, const char* name = "") {
+  if (x == y) {
+    ok(true, name);
+  } else {
+    ok(false, name);
+    cout << " expected: " << x << ", given: " << y << endl;
+  }
+}
+template <typename T, typename S> void same_sign(const T& x, const S& y, const char* name = "") {
+  if (x * y > 0) {
+    ok(true, name);
+  } else {
+    ok(false, name);
+    cout << " expected: " << x << ", given: " << y << endl;
+  }
+}
+template <typename T> void equal(T f1, T l1, T f2, T l2, const char* name = "") {
+  if (equal(f1, l1, f2)) {
+    ok(true, name);
+  } else {
+    ok(false, name);
+    cout << " expected: ";
+    print_range(cout, f1, l1);
+    cout <<", given: ";
+    print_range(cout, f2, l2);
+    cout << "}" << endl;
+  }
+}
+
+int main() {
+  typedef int feature_value_t;
+  typedef double real_t;
+
+  {
+    PKPerceptron<feature_value_t, real_t, int, real_t> kperc(3);
+    kperc.iterations = 20;
+    vector<feature_value_t> v;
+    v.push_back(10);
+    v.push_back(20);
+    v.push_back(30);
+    VAR(result, kperc.kernel(v,v));
+    
+    is(my_power(10*10 + 20*20 + 30*30 + 1, 2), result, "perceptron#polynomial_kernel");
+  }
+
+  {
+    PKPerceptron<feature_value_t, real_t, int, real_t> kperc(3);
+    Perceptron<feature_value_t, real_t> perc(3);
+    perc.iterations = 20;
+    vector<vector<feature_value_t> > samples;
+    vector<feature_value_t> v;
+    v.clear(); v.push_back(+1); v.push_back(+1); v.push_back(-1);
+    samples.push_back(v);
+    
+    v.clear(); v.push_back(-2); v.push_back(+2); v.push_back(+1);
+    samples.push_back(v);
+    
+    v.clear(); v.push_back(-1); v.push_back(+3); v.push_back(+4);
+    samples.push_back(v);
+    
+    v.clear(); v.push_back(-2); v.push_back(+5); v.push_back(+6);
+    samples.push_back(v);
+    
+    v.clear(); v.push_back(-1); v.push_back(+1); v.push_back(+1);
+    samples.push_back(v);
+    
+    v.clear(); v.push_back(-1); v.push_back(+1); v.push_back(+1);
+    samples.push_back(v);
+    
+    vector<int> b;
+    b.push_back(-1);
+    b.push_back(-1);
+    b.push_back(+1);
+    b.push_back(+1);
+    b.push_back(-1);
+    b.push_back(-1);
+    
+    perc.train(samples, b);
+    for ( size_t i = 0; i < samples.size(); ++i ) {
+      real_t res = perc.predict(samples[i]);
+      same_sign(b[i], res, (string("perceptron_perceptron#") + STR(i)).c_str());
+    }
+    kperc.train(samples, b);
+    for ( size_t i = 0; i < samples.size(); ++i ) {
+      real_t res = kperc.predict(samples[i]);
+      same_sign(b[i], res, (string("perceptron_with_kernel#") + STR(i)).c_str());
+    }
+    kperc.kernel_order = 3;
+    kperc.kernel_bias = 1;
+    kperc.projection_threshold = 1;
+    kperc.iterations = 20000;
+    kperc.check_convergence = false;
+    kperc.set_cache_size(1000);
+    int its = kperc.train(samples, b);
+    cout << "iterations = " << its << endl;
+    for ( size_t i = 0; i < samples.size(); ++i ) {
+      real_t res = kperc.predict(samples[i]);
+      same_sign(b[i], res, (string("perceptron_with_cache_projection#") + STR(i)).c_str());
+    }
+  }
+  return !succeed;
+}
+
+#endif
