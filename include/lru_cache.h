@@ -165,6 +165,7 @@ protected:
 #ifdef TEST_TINYCLASSIFIER_LRUCACHE_H
 #undef TEST_TINYCLASSIFIER_LRUCACHE_H
 #include <iostream>
+#include <cstdio>
 
 using namespace std;
 

@@ -103,6 +103,7 @@ std::ostream& operator<<(std::ostream& s, const std::_Rb_tree_const_iterator<V>&
 #ifdef TEST_TINYCLASSIFIER_UTIL_H
 #undef TEST_TINYCLASSIFIER_UTIL_H
 #include <iostream>
+#include <cstdio>
 
 using namespace std;
 

@@ -359,6 +359,8 @@ private:
 #include "util.h"
 #include <vector>
 #include <functional>
+#include <cstdio>
+#include <iostream>
 
 using namespace std;
 
