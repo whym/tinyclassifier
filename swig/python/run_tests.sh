@@ -1,2 +1,2 @@
 #! /bin/sh
-env LD_LIBRARY_PATH="../../lib:${LD_LIBRARY_PATH}" PYTHONPATH=build/lib.linux-`uname -m`-`python -V 2>&1 |  sed 's/^[^ ]* \(2\.[0-9]*\).*/\1/'` python test_perceptron.py
+env LD_LIBRARY_PATH="../../lib:${LD_LIBRARY_PATH}" PYTHONPATH=`python -c "import sys; from distutils.util import get_platform as p; print 'build/lib.%s-%d.%d' % ((p(),)+sys.version_info[0:2])"`:${PYTHONPATH} python test_perceptron.py

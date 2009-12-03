@@ -80,10 +80,20 @@ Ruby
 
 Requirements
 ==============================
+Following softwares are required.
 
-- gcc 4.3 (possibly gcc 4.x)
+- gcc and g++ 4.3 (possibly gcc 4.x)
 - swig 1.3.35 (possibly swig 1.3.x)
+- make
+- makedepend
 
+For every scripting language you wish to have the TinyClassifier
+library, set up runtimes, compilers and API files appropriately.
+
+- Python
+- Perl 5
+- Ruby
+- Java
 
 Build & Install
 ==============================
