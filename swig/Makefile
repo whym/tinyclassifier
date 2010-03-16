@@ -36,10 +36,10 @@ $(DEPFILE): $(SOURCES) $(HEADERS)
 
 clean:
 	-rm $(DEPFILE) */$(SWIGNAME)_wrap.cxx
-	$(MAKE) -C ruby   $@
-	$(MAKE) -C perl   $@
-	$(MAKE) -C python $@
-	$(MAKE) -C java   $@
+	-$(MAKE) -C ruby   $@
+	-$(MAKE) -C perl   $@
+	-$(MAKE) -C python $@
+	-$(MAKE) -C java   $@
 test:
 	cd ruby   && sh ./run_tests.sh
 	cd perl   && sh ./run_tests.sh

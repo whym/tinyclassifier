@@ -20,7 +20,7 @@ TinyClassifier, you don't need to use pipes or files, in which you
 have to encode/decode feature vectors via strings.  I believe the
 elimination of such redundant work increases productivity.
 
-TinyClassifier is a fast an flexible machine learning library with
+TinyClassifier is a fast and flexible machine learning library with
 following features:
 
 - Small and self-contained implementation
@@ -88,7 +88,10 @@ Following softwares are required.
 - makedepend
 
 For every scripting language you wish to have the TinyClassifier
-library, set up runtimes, compilers and API files appropriately.
+library, set up runtimes, compilers and API files appropriately.  Note
+that some distributions provide them separately.  For example, you may
+need to install something like 'libruby' or 'sun-jdk-*' to have API
+files installed,
 
 - Python
 - Perl 5

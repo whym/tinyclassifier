@@ -1,5 +1,6 @@
 require 'test/unit'
 require 'TinyClassifier'
+require 'tempfile'
 
 class Numeric
   def polarity
@@ -20,6 +21,11 @@ class TC_Perceptron < Test::Unit::TestCase
     [+1, -2, -1] => -1,
     [+1, -1, +1] => -1
   }
+
+  def setup
+    @samples = SAMPLES.keys
+    @labels = SAMPLES.keys.map{|x| SAMPLES[x]}
+  end
 
   def setup_samples
     dim = 100
@@ -65,12 +71,23 @@ class TC_Perceptron < Test::Unit::TestCase
   end
   def test_train_big
     setup_samples
-
     [IntPerceptron.new(@samples[0].length, 100),
      IntPKPerceptron.new(@samples[0].length, 100)].each do |p|
       p.train(@samples, @labels)
       assert_equal((0..@samples.size-1).map{|i| [@samples[i], @labels[i]]},
                    (0..@samples.size-1).map{|i| [@samples[i], p.predict(@samples[i]).polarity]})
     end
+  end
+
+  def test_save
+    #setup_samples
+    p1 = IntPerceptron.new(@samples[0].length, 100)
+    p1.train(@samples, @labels)
+    f = 'xx'#Tempfile.new('model').path
+    p1.store(f)
+    p2 = IntPerceptron.new(@samples[0].length, 100)
+    p2.load(f)
+    assert_equal((0..@samples.size-1).map{|i| [@samples[i], p1.predict(@samples[i]).polarity]},
+                 (0..@samples.size-1).map{|i| [@samples[i], p2.predict(@samples[i]).polarity]})
   end
 end

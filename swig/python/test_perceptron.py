@@ -1,5 +1,6 @@
 import TinyClassifier
 import unittest
+import urllib
 
 class TestPerceptron(unittest.TestCase):
 

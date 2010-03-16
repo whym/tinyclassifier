@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <iostream>
+#include <fstream>
 #include <numeric>
 #include <set>
 #include "util.h"
@@ -55,6 +56,28 @@ public:
     this->averaging_count = 1;
     this->bias = 0.0;
     this->bias_avg = 0.0;
+  }
+
+  const char* store(const char* filename) {
+    std::ofstream out(filename);
+    out << this->bias << '\t' << this->bias_avg << std::endl;
+    out << this->averaging_count << std::endl;
+    for ( size_t i = 0; i < this->feature_vector_size; ++i ) {
+      out << this->weights[i] << '\t' << this->weights_avg[i] << std::endl;
+    }
+    return filename;
+  }
+  
+  void load(const char* filename) {
+    this->init();
+    std::ifstream in(filename);
+    in >> this->bias;
+    in >> this->bias_avg;
+    in >> this->averaging_count;
+    for ( size_t i = 0; i < this->averaging_count - 1; ++i ) {
+      in >> this->weights[i];
+      in >> this->weights_avg[i];
+    }
   }
   
   size_t train(const std::vector<std::vector<feature_value_t> >& samples,
@@ -144,6 +167,7 @@ private:
   std::vector<std::pair<delta_t, size_t> > weighted_bases;
   std::vector<std::pair<delta_t, size_t> > weighted_bases_avg;
   std::vector<real_t> norms;
+  std::vector<feature_value_t> normal;
   typedef unsigned long cache_key_t;
   mutable      LRUCache<cache_key_t, feature_value_t, PKPerceptron<feature_value_t, real_t, polarity_t, delta_t> > cache;
   friend class LRUCache<cache_key_t, feature_value_t, PKPerceptron<feature_value_t, real_t, polarity_t, delta_t> >;
@@ -400,6 +424,16 @@ template <typename T> void equal(T f1, T l1, T f2, T l2, const char* name = "") 
   }
 }
 
+#include <sstream>
+#include <ctime>
+#include <cstdio>
+
+const char* temp_path() {
+  std::stringstream s;
+  s << "f57a" << time(NULL);
+  return s.str().c_str();
+}
+
 int main() {
   typedef int feature_value_t;
   typedef double real_t;
@@ -449,10 +483,19 @@ int main() {
     b.push_back(-1);
     
     perc.train(samples, b);
+    Perceptron<feature_value_t, real_t> perc2(3);
+    const char* temp = temp_path();
+    perc.store(temp);
+    perc2.load(temp);
+    remove(temp);
     for ( size_t i = 0; i < samples.size(); ++i ) {
       real_t res = perc.predict(samples[i]);
-      same_sign(b[i], res, (string("perceptron_perceptron#") + STR(i)).c_str());
+      same_sign(b[i], res,
+                (string("perceptron_perceptron#") + STR(i)).c_str());
+      same_sign(res, perc2.predict(samples[i]),
+                (string("perceptron_load_store#") + STR(i)).c_str());
     }
+
     kperc.train(samples, b);
     for ( size_t i = 0; i < samples.size(); ++i ) {
       real_t res = kperc.predict(samples[i]);

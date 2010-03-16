@@ -70,7 +70,6 @@ class TC_LibSVM_Dataset < Test::Unit::TestCase
   end
 
   def _test_libsvm(perp, train, test, dim)
-    require 'open-uri'
     require 'stringio'
 
     train,test = *([train,test].map{|x| if x.is_a? String then StringIO.new(x)
