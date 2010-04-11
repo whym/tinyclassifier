@@ -363,7 +363,7 @@ public:
     out << this->weighted_bases.size() << std::endl;
     out << this->averaging_count << std::endl;
     FOREACH(it, this->base_pointers) {
-      //! bases でまとめられている同じベクトルを複数回書き出してしまう
+      //! bases でまとめられている同じベクトルを複数回書き出すのが無駄
       print_range(out, **it, "\t", "", "\n");
     }
     for ( size_t i = 0; i < this->weighted_bases.size(); ++i ) {

@@ -83,7 +83,7 @@ class TC_Perceptron < Test::Unit::TestCase
     #setup_samples
     p1 = IntPerceptron.new(@samples[0].length, 100)
     p1.train(@samples, @labels)
-    f = 'xx'#Tempfile.new('model').path
+    f = Tempfile.new('model').path
     p1.store(f)
     p2 = IntPerceptron.new(@samples[0].length, 100)
     p2.load(f)
