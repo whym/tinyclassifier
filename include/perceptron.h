@@ -6,6 +6,7 @@
 #include <fstream>
 #include <numeric>
 #include <set>
+#include <algorithm>
 #include "util.h"
 #include "lru_cache.h"
 
@@ -280,7 +281,9 @@ public:
         if (! (given_polarity * prediction > 0) ) { // TODO: ignore the difference within threshold
           no_change = false;
 
+          // obtain the projection of the jth vector onto the current plane
           VAR(projw, this->projection(*(this->base_pointers[base_index])));
+          // compute the difference between the projection and the jth
           projw[j] -= static_cast<delta_t>(this->delta) * given_polarity;
           VAR(wnorm, std::inner_product(projw.begin(), projw.end(), projw.begin(), 0));
           if ( wnorm < this->projection_threshold ) {
@@ -351,6 +354,58 @@ public:
     }
     ret -= this->bias_avg;
     return ret;
+  }
+
+  const char* store(const char* filename) {
+    std::ofstream out(filename);
+    out << this->bias << '\t' << this->bias_avg << std::endl;
+    out << this->base_pointers.size() << std::endl;
+    out << this->weighted_bases.size() << std::endl;
+    out << this->averaging_count << std::endl;
+    FOREACH(it, this->base_pointers) {
+      //! bases でまとめられている同じベクトルを複数回書き出してしまう
+      print_range(out, **it, "\t", "", "\n");
+    }
+    for ( size_t i = 0; i < this->weighted_bases.size(); ++i ) {
+      out << this->weighted_bases[i].first << '\t'
+          << this->weighted_bases[i].second << '\t'
+          << this->weighted_bases_avg[i].first << '\t'
+          << this->weighted_bases_avg[i].second << std::endl;
+    }
+    return filename;
+  }
+  
+  void load(const char* filename) {
+    this->init();
+    std::ifstream in(filename);
+    in >> this->bias;
+    in >> this->bias_avg;
+    size_t basenum, weightnum;
+    in >> basenum;
+    in >> weightnum;;
+    in >> this->averaging_count;
+    for ( size_t i = 0; i < basenum; ++i ) {
+      std::vector<feature_value_t> vec;
+      for ( size_t j = 0; j < this->feature_vector_size; ++j ) {
+        feature_value_t x;
+        in >> x;
+        vec.push_back(x);
+      }
+      VAR(p, this->bases.insert(vec));
+      VAR(basep, &(*(p.first)));
+      this->base_pointers.push_back(basep);
+      this->norms.push_back(std::inner_product(basep->begin(), basep->end(), basep->begin(), 0));
+    }
+    for ( size_t i = 0; i < weightnum; ++i ) {
+      delta_t x1, x2;
+      size_t y1,y2;
+      in >> x1;
+      in >> y1;
+      in >> x2;
+      in >> y2;
+      this->weighted_bases.push_back(std::make_pair(x1, y1));
+      this->weighted_bases_avg.push_back(std::make_pair(x2, y2));
+    }
   }
 
 private:
@@ -430,7 +485,7 @@ template <typename T> void equal(T f1, T l1, T f2, T l2, const char* name = "") 
 
 const char* temp_path() {
   std::stringstream s;
-  s << "f57a" << time(NULL);
+  s << "f57a" << time(NULL) << "__";
   return s.str().c_str();
 }
 
@@ -497,9 +552,17 @@ int main() {
     }
 
     kperc.train(samples, b);
+    PKPerceptron<feature_value_t, real_t, int, real_t> kperc2(3);
+    temp = temp_path();
+    kperc.store(temp);
+    kperc2.load(temp);
+    remove(temp);
     for ( size_t i = 0; i < samples.size(); ++i ) {
       real_t res = kperc.predict(samples[i]);
-      same_sign(b[i], res, (string("perceptron_with_kernel#") + STR(i)).c_str());
+      same_sign(b[i], res,
+                (string("perceptron_with_kernel#") + STR(i)).c_str());
+      same_sign(res, kperc2.predict(samples[i]),
+                (string("perceptron_with_kernel_load_store#") + STR(i)).c_str());
     }
     kperc.kernel_order = 3;
     kperc.kernel_bias = 1;
