@@ -10,14 +10,14 @@ PACKAGE=com/github/whym
 LIBS=-L../../lib
 INC=-I$(INCLUDE) -I$(INCLUDE)/linux -I../../include
 
-$(SO):
+all: $(SO) $(TARGET).jar
+
+$(SO): *_wrap.cxx
 	$(CXX) -O3 -c -fpic $(TARGET)_wrap.cxx  $(INC)
 	$(CXX) -shared -o $(SO) $(TARGET)_wrap.o $(LIBS)
-$(TARGET).jar:
+$(TARGET).jar: $(PACKAGE)/*.java
 	$(JAVAC) $(PACKAGE)/*.java
 	$(JAR) cfv $(TARGET).jar $(PACKAGE)/*.class
-
-all: $(SO) $(TARGET).jar
 
 test: all
 	./run_tests.sh
