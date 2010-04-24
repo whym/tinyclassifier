@@ -1,6 +1,6 @@
 TARGET=TinyClassifier
 SO=lib$(TARGET).so
-JAVAC=javac -source 1.5 
+JAVAC=javac -source 1.6
 JAVA=java
 JAR=jar
 CXX=c++
@@ -19,8 +19,8 @@ $(TARGET).jar:
 
 all: $(SO) $(TARGET).jar
 
-test: all test.class
-	env LD_LIBRARY_PATH=.:${LD_LIBRARY_PATH} $(JAVA) test
+test: all
+	./run_tests.sh
 
 clean:
 	rm -fr *.jar *.o *.so *.class $(PACKAGE)/*.class
