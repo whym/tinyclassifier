@@ -77,12 +77,12 @@ class TC_LibSVM_Dataset < Test::Unit::TestCase
                                         end})
     train = StringIO.new(train.to_a.shuffle.join)
     labels, vectors = *libsvm_to_vec(train, dim)
-    STDERR.puts "training data size = #{labels.size}"
+    STDERR.puts " training data size = #{labels.size}"
     if perp.respond_to?(:get_cache_size) then
-      STDERR.puts "cache size = #{perp.get_cache_size}"
+      STDERR.puts " cache size = #{perp.get_cache_size}"
     end
     itr = perp.train(vectors, labels)
-    STDERR.puts "iterations = #{itr}"
+    STDERR.puts " iterations = #{itr}"
 
     pn = {
       true  => {:p => 0, :n => 0},
@@ -91,24 +91,29 @@ class TC_LibSVM_Dataset < Test::Unit::TestCase
     libsvm_to_vec(test, dim) do |lab, vec|
       pred = perp.predict(vec)
       correct = lab * pred > 0
-      #puts "##{i+=1} #{correct}"
+      #puts " ##{i+=1} #{correct}"
       pn[correct][lab > 0? :p : :n] += 1
     end
     STDERR.puts pn.inspect
-    STDERR.puts "accuracy  = #{(pn[true][:p].to_f + pn[true][:n]) / (pn[true][:p] + pn[true][:n] + pn[false][:p] + pn[false][:n])}"
+    STDERR.puts " accuracy  = #{(pn[true][:p].to_f + pn[true][:n]) / (pn[true][:p] + pn[true][:n] + pn[false][:p] + pn[false][:n])}"
     prec = pn[true][:p].to_f / (pn[true][:p] + pn[false][:p])
     reca = pn[true][:p].to_f / (pn[true][:p] + pn[false][:n])
-    STDERR.puts "precision = #{prec}"
-    STDERR.puts "recall    = #{reca}"
-    STDERR.puts "fmeasure  = #{1.0 / (0.5/prec + 0.5/reca)}"
+    STDERR.puts " precision = #{prec}"
+    STDERR.puts " recall    = #{reca}"
+    STDERR.puts " fmeasure  = #{1.0 / (0.5/prec + 0.5/reca)}"
   end
 
   def test_libsvm1
-    [FloatPerceptron.new(DIM, 4),
-     FloatPKProjectron.new(DIM, 4, 1, 0, 0, 0.8),
-     FloatPKPerceptron.new(DIM, 4, 5, 1, 0)].each do |p|
-      srand(1029)
-      _test_libsvm(p, DATA_TR, DATA_TS, DIM)
+    require 'benchmark'
+    Benchmark.bm do |bm|
+      [['normal', FloatPerceptron.new(DIM, 4)],
+       ['1st-order kernel', FloatPKProjectron.new(DIM, 4, 1, 0, 0, 0.8)],
+       ['3rd-order kernel', FloatPKPerceptron.new(DIM, 4, 3, 1, 0)]].each do |ent|
+        name,p = *ent
+        srand(1029)
+        STDERR.puts "#{name}:"
+        bm.report { _test_libsvm(p, DATA_TR, DATA_TS, DIM) }
+      end
     end
   end
 end
