@@ -168,7 +168,7 @@ private:
   std::vector<std::pair<delta_t, size_t> > weighted_bases;
   std::vector<std::pair<delta_t, size_t> > weighted_bases_avg;
   std::vector<real_t> norms;
-  std::vector<feature_value_t> normal;
+  std::vector<std::vector<real_t> > orthonormals;
   typedef unsigned long cache_key_t;
   mutable      LRUCache<cache_key_t, feature_value_t, PKPerceptron<feature_value_t, real_t, polarity_t, delta_t> > cache;
   friend class LRUCache<cache_key_t, feature_value_t, PKPerceptron<feature_value_t, real_t, polarity_t, delta_t> >;
@@ -194,6 +194,7 @@ public:
     this->cache.init();
     this->base_pointers.clear();
     this->norms.clear();
+    this->orthonormals.clear();
   }
 
   void set_cache_size(cache_size_t i) const {
@@ -205,6 +206,9 @@ public:
   }
 
 private:
+  template<typename Val> inline Val norm(const std::vector<Val>& x, Val v = 0) {
+    return std::inner_product(x.begin(), x.end(), x.begin(), v);
+  }
   inline size_t decode_x(cache_key_t p) const {
     return p / this->base_pointers.size();
     //return p.first;
@@ -241,6 +245,19 @@ private:
     }
     return w;
   }
+
+  std::vector<real_t> projection_residue(const std::vector<feature_value_t>& x) const {
+    std::vector<real_t> w(x.size());
+    std::copy(x.begin(), x.end(), w.begin());
+    for ( size_t i = 1; i < this->orthonormals.size(); ++i ) {
+      VAR(len, std::inner_product(w.begin(), w.end(), this->orthonormals[i].begin(), 0));
+      for ( size_t j = 0; j < w.size(); ++j ) {
+        w[j] -= len * this->orthonormals[i][j];
+      }
+    }
+    //std::cerr << x << ", " << w << std::endl;//!
+    return w;
+  }
   
 public:
   feature_value_t kernel(const std::vector<feature_value_t>& v,
@@ -259,7 +276,7 @@ public:
       this->weighted_bases.push_back(std::make_pair(static_cast<real_t>(0), this->base_pointers.size()));
       this->weighted_bases_avg.push_back(std::make_pair(static_cast<real_t>(0), this->base_pointers.size()));
       this->base_pointers.push_back(basep);
-      this->norms.push_back(std::inner_product(it->begin(), it->end(), it->begin(), 0));
+      this->norms.push_back(norm(*it));
     }
     size_t i;
     for ( i = 0; i < this->iterations; ++i ) {
@@ -285,8 +302,11 @@ public:
           VAR(projw, this->projection(*(this->base_pointers[base_index])));
           // compute the difference between the projection and the jth
           projw[j] -= static_cast<delta_t>(this->delta) * given_polarity;
-          VAR(wnorm, std::inner_product(projw.begin(), projw.end(), projw.begin(), 0));
-          if ( wnorm < this->projection_threshold ) {
+          //std::cerr << "projw: " <<  projw << std::endl;//!
+          VAR(residue, projection_residue(*(this->base_pointers[base_index])));
+          //std::cerr << "resid: " <<  residue << std::endl;//!
+          VAR(rnorm, norm(residue));
+          if ( rnorm < this->projection_threshold ) {
 #ifdef DEBUG
             //std::cerr << "projected? " << wnorm << "<" << this->projection_threshold << " : " << projw << std::endl;
 #endif
@@ -300,6 +320,13 @@ public:
           } else {
             this->weighted_bases[j].first     += static_cast<delta_t>(this->delta) * given_polarity;
             this->weighted_bases_avg[j].first += static_cast<delta_t>(this->delta) * given_polarity * this->averaging_count;
+            // add a new orthonormal
+            {
+              FOREACH(it, residue) {
+                *it = *it / rnorm;
+              }
+              this->orthonormals.push_back(residue);
+            }            
           }
           this->bias     += static_cast<real_t>(given_polarity);
           this->bias_avg += static_cast<real_t>(given_polarity) * this->averaging_count;
@@ -394,7 +421,7 @@ public:
       VAR(p, this->bases.insert(vec));
       VAR(basep, &(*(p.first)));
       this->base_pointers.push_back(basep);
-      this->norms.push_back(std::inner_product(basep->begin(), basep->end(), basep->begin(), 0));
+      this->norms.push_back(norm(*basep));
     }
     for ( size_t i = 0; i < weightnum; ++i ) {
       delta_t x1, x2;
