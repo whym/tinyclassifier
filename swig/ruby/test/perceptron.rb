@@ -47,7 +47,7 @@ class TC_Perceptron < Test::Unit::TestCase
                  p.kernel(x,x))
   end
   def test_vector
-    assert_equal(MAT, IntVectorVector.new(MAT).map)
+    assert_equal(MAT, IntVectorVector.new(MAT).to_a)
   end
   def test_power
     assert_equal(11**2, power_int(11,2))
