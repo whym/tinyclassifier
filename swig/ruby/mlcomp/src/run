@@ -1,0 +1,80 @@
+#!/usr/bin/ruby
+
+class Float
+  def polarity
+    return (self / self.abs).to_i
+  end
+end
+
+cmd = ARGV.shift or raise "Missing command: learn | predict"
+case cmd
+when 'construct' then
+  system 'sh ./compile'
+when 'learn' then
+  inPath = ARGV.shift or raise "Missing argument (input file)"
+  # Just save the labeled examples
+  system "cp #{inPath} train.dat"
+when 'predict' then
+
+  require 'TinyClassifier'
+  include TinyClassifier
+
+  def parse(io, &block)
+    io.each_line do |line|
+      line.gsub(/\#.*/,'')
+      cols = line.split
+      next if cols.length <= 0
+      block.call(cols)
+    end
+  end
+
+  def find_dim(io)
+    dim = 0
+    parse(io) do |cols|
+      cols.shift
+      cols.each do |d|
+        ind,_ = *(d.split(/:/))
+        ind = ind.to_i
+        dim = ind + 1 if ind >= dim
+      end
+    end
+    return dim
+  end
+
+  def libsvm_to_vec(io, dim, &block)
+    labels  = IntVector.new
+    vectors = FloatVectorVector.new
+    parse(io) do |cols|
+      vec = FloatVector.new(dim)
+      lab = cols.shift.to_i
+      cols.each do |d|
+        ind,val = *(d.split(/:/))
+        begin
+          ind = ind.to_i
+          next if ind >= dim
+          vec[ind] = val.to_f
+        rescue ArgumentError
+          STDERR.puts vec.inspect
+          STDERR.puts "'#{ind}:#{val}' at #{line} of #{io}"
+          exit 1
+        end
+      end
+      vectors << vec
+      labels  << lab
+      yield lab, vec if block
+    end
+    return [labels, vectors]
+  end
+
+  inPath = ARGV.shift or raise "Missing argument (input file)"
+  outPath = ARGV.shift or raise "Missing argument (output file)"
+  dim = find_dim(open("train.dat"))
+  labels, vectors= libsvm_to_vec(open("train.dat"), dim)
+  machine = FloatPKPerceptron.new(vectors[0].size, 1000)
+  machine.train(vectors, labels)
+  out = open(outPath, "w")
+  libsvm_to_vec(open(inPath), dim) do |_,vec|
+    out.puts machine.predict(vec).polarity 
+  end
+  out.close
+end

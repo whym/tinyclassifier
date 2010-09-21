@@ -1,0 +1,3 @@
+name: tinyclassifier-pkperceptron-test
+description: test program of TinyClassifier
+task: BinaryClassification
