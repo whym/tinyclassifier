@@ -1,82 +1,67 @@
-======================================================================
-TinyClassifier - a tiny machine learning library for scripting
-======================================================================
+=====================
+TinyClassifier
+=====================
+------------------------------------------------
+a tiny machine learning library for scripting
+------------------------------------------------
 
+ :Homepage: http://whym.github.com/tinyclassifier
+ :Contact:  http://github.com/whym
 
 Overview
 ==============================
 
 Tuning machine-learning based systems is an art.  You need to do
-try-and-error again and again.  In such development cycles, it's
-painful to spend the time for solving compilation errors.
+try-and-error again and again.  In such development cycles, you might
+want to avoid using such a language like C++; it can be painful to
+spend the time for solving compilation errors.
 
 Using scripting language is good for rapid programming.  But it's
-not good for the CPU-intensive calculations which might be optimized
+not good for the CPU-intensive calculations, which should be optimized
 and/or parallelized by compilers.
 
-TinyClassifier tries to fill the gap between a high-performance
-inner implementation and application programs that use it.  With
-TinyClassifier, you don't need to use pipes or files, in which you
-have to encode/decode feature vectors via strings.  I believe the
-elimination of such redundant work increases productivity.
+TinyClassifier tries to fill the gap between a high-performance inner
+implementation and application programs that use it.  With
+TinyClassifier, you don't need to use pipes or temporary files nor to
+encode/decode feature vectors into/from strings.  Instead, you will
+have transparent access to the data structures and class libraries
+implemented in C++ from scripting languages like Python or Ruby.
 
-TinyClassifier is a fast and flexible machine learning library with
-following features:
+TinyClassifier is a fast and flexible machine learning library that
+provides you:
 
-- Small and self-contained implementation
-- Reasonably efficient and compact implementation with C++
-- Interfaces to Ruby, Perl, Python, etc. via SWIG
+- **Small and self-contained** software package of machine learning
+  with minimum dependency to external libraries
+- Reasonably **efficient and readable** implementation as C++ header
+  libraries
+- **Language bindings** to Ruby, Perl, Python, etc. via SWIG
 
 On the other hand, TinyClassifier is not for those people
 
 - Who want the best accuracy and efficiency of machine learning.
 - Who can productively implement anything in C++.
 
-
 Implemented algorithms
 ==============================
 
 Averaged Perceptron for binary classification
-  non-kernelized version and kernelized version
-  (currently polynomial kernel only)
+  
+  Non-kernelized version and kernelized [#]_ version are implemented
+  (currently polynomial kernel only).
+  
+.. [#]
+  
+  The implementation of 'PKPerceptron' is based on Ling-Pipe's
+  explanation of Kernel Averaged Perceptron. See below for further
+  information.
+  
+  http://alias-i.com/lingpipe/docs/api/com/aliasi/classify/PerceptronClassifier.html
 
 Planned to implement
 ------------------------------
 
 - Maximum entropy classifier with Stochastic Gradient Descent algorithm
 - Complementary naive Bayes classifier
-
-
-Sample usage
-==============================
-
-Ruby
-------------------------------
-
-::
-
-  require 'TinyClassifier'
-  include TinyClassifier
-
-  SAMPLES = {
-    [-2, +1, -1] => +1,
-    [-1, +2, +1] => +1,
-    [-1, -1, -1] => -1,
-    [+1, +1, -1] => +1,
-    [-1, +1, -1] => +1,
-    [+1, -2, -1] => -1,
-    [+1, -1, +1] => -1
-  }
-
-  keys = SAMPLES.keys.sort
-  p = IntPKPerceptron.new(SAMPLES.keys[0].length, 10)
-  p.train(IntVectorVector.new(keys),
-          IntVector.new(keys.map{|x| SAMPLES[x]}))
-  keys.each do |k|
-    pred = p.predict(k)
-    puts "#{SAMPLES[k]}: #{pred}"
-  end
-
 
 Requirements
 ==============================
@@ -87,16 +72,23 @@ Following softwares are required.
 - make
 - makedepend
 
-For every scripting language you wish to have the TinyClassifier
-library, set up runtimes, compilers and API files appropriately.  Note
-that some distributions provide them separately.  For example, you may
-need to install something like 'libruby' or 'sun-jdk-*' to have API
-files installed,
+The development environment needs to be prepared for each language you
+will use with TinyClassifier. [#]_ Currently, language bindings are
+maintained for the languages below.
 
 - Python
 - Perl 5
 - Ruby
 - Java
+
+.. [#]
+   
+   For every language you wish to have the TinyClassifier library, you
+   need to prepare development environment; normally you need to set
+   up runtimes, compilers and API files appropriately.  Note that they
+   sometimes are provided separately.  For example, you may need to
+   install something like 'libruby' or 'sun-jdk-\*' to have API files
+   installed.
 
 Build & Install
 ==============================
@@ -132,28 +124,62 @@ library files.
 
 # Details to be written
 
-
-Usage
+Sample codes
 ==============================
 
-See the tests included in the package for the examples of usage.
+Python ::
+    
+      from TinyClassifier import *
+      
+      # Prepare examples
+      SAMPLES = [
+          [[-2, +1, -1], +1],
+          [[-1, +2, +1], +1],
+          [[-1, -1, -1], -1],
+          [[+1, +1, -1], +1],
+          [[-1, +1, -1], +1],
+          [[+1, -2, -1], -1],
+          [[+1, -1, +1], -1]
+          ]
+      
+      vecs = sorted([x[0] for x in SAMPLES]) # Obtain feature vectors
+      labs = sorted([x[1] for x in SAMPLES]) # Obtain labels
+      p = IntPKPerceptron(len(SAMPLES[0]), 10) # Construct a perceptron that stops after 10 iterations
+      p.train(IntVectorVector(vecs),           # Give the perceptron training examples
+              IntVector(labs))
+      for (i, k) in enumerate(vecs):  # Print the prediction for the training examples (closed set evaluation)
+          pred = p.predict(k)
+          print "%d: %f" % (SAMPLES[i][1], pred)
+    
+Ruby ::
+    
+      require 'TinyClassifier'
+      include TinyClassifier
+      
+      # Prepare examples
+      SAMPLES = {
+        [-2, +1, -1] => +1,
+        [-1, +2, +1] => +1,
+        [-1, -1, -1] => -1,
+        [+1, +1, -1] => +1,
+        [-1, +1, -1] => +1,
+        [+1, -2, -1] => -1,
+        [+1, -1, +1] => -1
+      }
+    
+      keys = SAMPLES.keys.sort  # Obtain feature vectors
+      keys = keys.map{|x| SAMPLES[x]} # Obtain labels
+      p = IntPKPerceptron.new(SAMPLES.keys[0].length, 10) # Construct a perceptron that stops after 10 iterations
+      p.train(IntVectorVector.new(keys),                  # Give the perceptron training examples
+              IntVector.new(labels))
+      keys.each do |k|          # Print the prediction for the training examples (closed set evaluation)
+        pred = p.predict(k)
+        puts "#{SAMPLES[k]}: #{pred}"
+      end
+
+
+See the tests included in the package for further examples.
 Tests are located at 'test', 'swig/ruby/test', etc.
-
-
-Homepage
-==============================
-
-http://whym.github.com/tinyclassifier
-
-
-Notes
-==============================
-
-'PKPerceptron' is based on Ling-Pipe's explanation of Kernel Averaged
-Perceptron. (see below for further information)
-
-http://alias-i.com/lingpipe/docs/api/com/aliasi/classify/PerceptronClassifier.html
-
 
 
 .. Local variables:
