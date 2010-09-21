@@ -45,20 +45,48 @@ class TC_LibSVM_Dataset < Test::Unit::TestCase
   DATA_TR = open_or_uri_open('http://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/binary/a1a').to_a.join
   DATA_TS = open_or_uri_open('http://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/binary/a1a.t').to_a.join
 
-  def libsvm_to_vec(io, dim, &block)
+  def parse(io, &block)
+    io.each_line do |line|
+      line.gsub(/\#.*/,'')
+      cols = line.split
+      next if cols.length <= 0
+      block.call(cols)
+    end
+  end
+
+  def find_dim(io)
+    dim = 0
+    parse(io) do |cols|
+      cols.shift
+      cols.each do |d|
+        ind,_ = *(d.split(/:/))
+        ind = ind.to_i
+        dim = ind + 1 if ind >= dim
+      end
+    end
+    return dim
+  end
+
+  def libsvm_to_vec(io, dim=nil, &block)
+    if !dim then
+      str = io.read
+      dim = find_dim(StringIO.new(str))
+      io = StringIO.new(str)
+    end
     labels  = IntVector.new
     vectors = FloatVectorVector.new
-    io.each_line do |line|
-      cols = line.split
+    parse(io) do |cols|
       vec = FloatVector.new(dim)
       lab = cols.shift.to_i
       cols.each do |d|
         ind,val = *(d.split(/:/))
         begin
-          vec[ind.to_i] = val.to_f
+          ind = ind.to_i
+          next if ind >= dim
+          vec[ind] = val.to_f
         rescue ArgumentError
-          puts vec.inspect
-          puts "'#{ind}:#{val}' at #{line}"
+          STDERR.puts vec.inspect
+          STDERR.puts "'#{ind}:#{val}' at #{line} of #{io}"
           exit 1
         end
       end
