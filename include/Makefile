@@ -9,6 +9,7 @@ all: test
 build: $(RESULTS)
 clean:
 	-rm $(RESULTS) *.o
+	-rm *__
 test:
 	$(CXX) $(CXXFLAGS) -DTEST_TINYCLASSIFIER_UTIL_H tester.cc -o tester && ./tester
 	$(CXX) $(CXXFLAGS) -DTEST_TINYCLASSIFIER_LRUCACHE_H tester.cc -o tester && ./tester
