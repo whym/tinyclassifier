@@ -1,4 +1,5 @@
-package com.github.whym;
+package com.github.whym.tinyclassifier.test;
+import com.github.whym.tinyclassifier.*;
 
 public class TestTinyClassifier {
   static {

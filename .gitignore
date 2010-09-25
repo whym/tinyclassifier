@@ -10,3 +10,5 @@ swig/ruby/Makefile
 mkmf.log
 *.pyc
 *.bs
+*.class
+swig/java/com/github/whym/tinyclassifier/*.java
