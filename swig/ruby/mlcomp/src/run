@@ -54,9 +54,7 @@ when 'predict' then
           next if ind >= dim
           vec[ind] = val.to_f
         rescue ArgumentError
-          STDERR.puts vec.inspect
-          STDERR.puts "'#{ind}:#{val}' at #{line} of #{io}"
-          exit 1
+          raise "'#{ind}:#{val}' at #{line} of #{io}"
         end
       end
       vectors << vec

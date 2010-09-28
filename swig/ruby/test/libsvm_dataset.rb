@@ -9,7 +9,7 @@ require 'stringio'
 require 'tempfile'
 require 'uri'
 def open_or_uri_open(target, &block)
-  filename = Dir.tmpdir + File::SEPARATOR + URI.encode(target, /#{URI::UNSAFE}|\//)
+  filename = Dir.tmpdir + File::SEPARATOR + URI.encode(target, /#{URI::UNSAFE}|\//).tr('%', '_')
   if !File.exists?(filename) then
     open(filename,'w') do |io|
       io.write open(target).read
@@ -24,7 +24,7 @@ def open_or_uri_open(target, &block)
   end
 end
 
-if Array.new.respond_to?(:shuffle) then
+if !Array.new.respond_to?(:shuffle) then
   def Array.shuffle
     a = self.clone
     a.shuffle!
@@ -85,9 +85,7 @@ class TC_LibSVM_Dataset < Test::Unit::TestCase
           next if ind >= dim
           vec[ind] = val.to_f
         rescue ArgumentError
-          STDERR.puts vec.inspect
-          STDERR.puts "'#{ind}:#{val}' at #{line} of #{io}"
-          exit 1
+          raise "'#{ind}:#{val}' at #{line} of #{io}"
         end
       end
       vectors << vec

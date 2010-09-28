@@ -124,7 +124,7 @@ public:
   }
   
   real_t predict(const std::vector<feature_value_t>& v) const {
-    check_feature_vector(v);    // TODO: faster if no check, for internal
+    check_feature_vector(v);    // TODO: make it faster for internal use by skipping this check
     // NOTE: note that this value is not normalized by averaging_count
     return std::inner_product(v.begin(), v.begin() + this->feature_vector_size,
                               this->weights.begin(),
