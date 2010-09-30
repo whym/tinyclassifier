@@ -88,11 +88,18 @@ class TC_LibSVM_Dataset < Test::Unit::TestCase
           raise "'#{ind}:#{val}' at #{line} of #{io}"
         end
       end
-      vectors << vec
-      labels  << lab
-      yield lab, vec if block
+      if block then
+        yield lab, vec if block
+      else
+        vectors << vec
+        labels  << lab
+      end
     end
-    return [labels, vectors]
+    if block then
+      return nil
+    else
+      return [labels, vectors]
+    end
   end
 
   def _test_libsvm(perp, train, test, dim)
@@ -132,9 +139,9 @@ class TC_LibSVM_Dataset < Test::Unit::TestCase
   def test_libsvm1
     require 'benchmark'
     Benchmark.bm do |bm|
-      [['normal', FloatPerceptron.new(DIM, 4)],
-       ['1st-order kernel', FloatPKProjectron.new(DIM, 4, 1, 0, 0, 0.8)],
-       ['3rd-order kernel', FloatPKPerceptron.new(DIM, 4, 3, 1, 0)]].each do |ent|
+      [['linear',    FloatPerceptron.new(DIM,   4)],
+       ['1st-order', FloatPKProjectron.new(DIM, 4, 1, 0, 0, 0.8)],
+       ['3rd-order', FloatPKPerceptron.new(DIM, 4, 3, 1, 0)]].each do |ent|
         name,p = *ent
         srand(1029)
         STDERR.puts "#{name}:"
