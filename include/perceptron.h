@@ -25,7 +25,7 @@ inline bool is_zero(int x, int eps) {
 template <typename feature_value_t, typename real_t=double, typename polarity_t=int, typename delta_t=int>
 class Perceptron {
 public:
-  size_t feature_vector_size;
+  size_t dimensions;
   size_t iterations;
   delta_t delta;
   bool check_convergence;
@@ -38,8 +38,8 @@ protected:
 
 public:
 
-  Perceptron(size_t size_, size_t iter=40)
-    : feature_vector_size(size_), iterations(iter),
+  Perceptron(size_t dim, size_t iter=40)
+    : dimensions(dim), iterations(iter),
       delta(1), check_convergence(true) {
     init();
   }
@@ -50,7 +50,7 @@ public:
     this->weights_avg.clear();
     this->weights.clear();
     
-    for ( size_t i = 0; i < this->feature_vector_size; ++i ) {
+    for ( size_t i = 0; i < this->dimensions; ++i ) {
       this->weights.push_back(0);
       this->weights_avg.push_back(0);
     }
@@ -63,7 +63,7 @@ public:
     std::ofstream out(filename);
     out << this->bias << '\t' << this->bias_avg << std::endl;
     out << this->averaging_count << std::endl;
-    for ( size_t i = 0; i < this->feature_vector_size; ++i ) {
+    for ( size_t i = 0; i < this->dimensions; ++i ) {
       out << this->weights[i] << '\t' << this->weights_avg[i] << std::endl;
     }
     return filename;
@@ -100,7 +100,7 @@ public:
         real_t prediction = this->predict(samples[j]);
         if (! (given_polarity * prediction > 0) ) { // TODO: ignore the difference within threshold
           no_change = false;
-          for ( size_t k = 0; k < this->feature_vector_size; ++k ) {
+          for ( size_t k = 0; k < this->dimensions; ++k ) {
             this->weights[k]     += given_polarity * this->delta * samples[j][k];
             this->weights_avg[k] += given_polarity * this->delta * samples[j][k] * this->averaging_count;
           }
@@ -116,7 +116,7 @@ public:
 
     // TODO: これやったほうが公開用predictを2倍のはやさにできる
     // if do below, predict() must not do the same
-//     for ( size_t k = 0; k < this->feature_vector_size; ++k ) {
+//     for ( size_t k = 0; k < this->dimensions; ++k ) {
 //       this->weights[k] -= static_cast<real_t>(this->weights_avg[k]) / static_cast<real_t>(this->averaging_count);
 //     }
 //     this->bias -= static_cast<real_t>(this->bias_avg) / static_cast<real_t>(this->averaging_count);
@@ -126,17 +126,17 @@ public:
   real_t predict(const std::vector<feature_value_t>& v) const {
     check_feature_vector(v);    // TODO: make it faster for internal use by skipping this check
     // NOTE: note that this value is not normalized by averaging_count
-    return std::inner_product(v.begin(), v.begin() + this->feature_vector_size,
+    return std::inner_product(v.begin(), v.begin() + this->dimensions,
                               this->weights.begin(),
                               this->bias) * this->averaging_count -
-      std::inner_product(v.begin(), v.begin() + this->feature_vector_size,
+      std::inner_product(v.begin(), v.begin() + this->dimensions,
                          this->weights_avg.begin(),
                          this->bias_avg);
   }
 
 protected:
   bool check_feature_vector(const std::vector<feature_value_t>& v) const {
-    VAR(d, v.size() - this->feature_vector_size);
+    VAR(d, v.size() - this->dimensions);
     if ( d == 0 ) {
       return true;
     } else if ( d > 0 ) {
@@ -144,7 +144,7 @@ protected:
       return true;
 #endif
     }
-    std::cerr << "check_feature_vector(): expected " << this->feature_vector_size << ", but " << v.size() << std::endl;
+    std::cerr << "check_feature_vector(): expected " << this->dimensions << ", but " << v.size() << std::endl;
     return false;
   }
 };
@@ -176,8 +176,8 @@ private:
 
 public:
 
-  PKPerceptron(size_t size_, size_t iter=40, size_t order=2, feature_value_t bias=1, cache_size_t cache_size=0, real_t pth=0)
-    : Perceptron<feature_value_t, real_t, polarity_t, delta_t>(size_, iter), kernel_order(order),
+  PKPerceptron(size_t dim, size_t iter=40, size_t order=2, feature_value_t bias=1, cache_size_t cache_size=0, real_t pth=0)
+    : Perceptron<feature_value_t, real_t, polarity_t, delta_t>(dim, iter), kernel_order(order),
       kernel_bias(bias), projection_threshold(pth), cache(*this, cache_size) {
     init();
   }
@@ -262,7 +262,7 @@ private:
 public:
   feature_value_t kernel(const std::vector<feature_value_t>& v,
                          const std::vector<feature_value_t>& w) const {
-    return my_power(std::inner_product(v.begin(), v.begin() + this->feature_vector_size, w.begin(), this->kernel_bias), this->kernel_order);
+    return my_power(std::inner_product(v.begin(), v.begin() + this->dimensions, w.begin(), this->kernel_bias), this->kernel_order);
   }
 
   size_t train(const std::vector< std::vector< feature_value_t> >& samples,
@@ -354,7 +354,7 @@ public:
     }
 #endif
     
-//     for ( size_t k = 0; k < this->feature_vector_size; ++k ) {
+//     for ( size_t k = 0; k < this->dimensions; ++k ) {
 //       this->weighted_bases[k].first -= static_cast<real_t>(this->weighted_bases_avg[k].first) / static_cast<real_t>(this->averaging_count);
 //     }
 //     this->bias -= static_cast<real_t>(this->bias_avg) / static_cast<real_t>(this->averaging_count);
@@ -413,7 +413,7 @@ public:
     in >> this->averaging_count;
     for ( size_t i = 0; i < basenum; ++i ) {
       std::vector<feature_value_t> vec;
-      for ( size_t j = 0; j < this->feature_vector_size; ++j ) {
+      for ( size_t j = 0; j < this->dimensions; ++j ) {
         feature_value_t x;
         in >> x;
         vec.push_back(x);
