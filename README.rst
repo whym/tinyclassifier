@@ -182,6 +182,14 @@ See the tests included in the package for further examples.
 Tests are located at 'test', 'swig/ruby/test', etc.
 
 
+Known bugs
+==============================
+
+- The implementation of projectron is wrong.  It has to be fixed referring [#]_ and [#]_
+
+.. [#] http://portal.acm.org/citation.cfm?id=1755875
+.. [#] http://portal.acm.org/citation.cfm?id=1390247
+
 .. Local variables:
 .. mode: rst
 .. End:
