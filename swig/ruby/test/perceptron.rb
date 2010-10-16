@@ -80,7 +80,7 @@ class TC_Perceptron < Test::Unit::TestCase
   end
 
   def test_save
-    #setup_samples
+    setup_samples
     p1 = IntPerceptron.new(@samples[0].length, 100)
     p1.train(@samples, @labels)
     f = Tempfile.new('model').path

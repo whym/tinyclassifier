@@ -1,5 +1,5 @@
 LDFLAGS ?= 
-RESULTS =
+RESULTS = tester
 SOURCES =
 HEADERS = util.h lru_cache.h
 DEPFILE = .depend.makefile

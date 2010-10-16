@@ -7,56 +7,93 @@
 #include <numeric>
 #include <set>
 #include <algorithm>
+#include <limits>
+#include <cmath>
+#include <cassert>
 #include "util.h"
 #include "lru_cache.h"
 
 #define EPSILON 1.0E-4
 #include <math.h>
+
 template<typename value_t>
 inline bool is_zero(value_t x, value_t eps=EPSILON) {
   return fabs(x) < eps;
 }
-
 template<>
 inline bool is_zero(int x, int eps) {
   return x == 0;
 }
 
+template<typename value_t>
+inline bool is_nan(value_t x) {
+  return x != x;
+}
+template<>
+inline bool is_nan(int x) {
+  return false;
+}
+
+template<typename value_t>
+bool read_with_default(std::istream& i, value_t& x, const value_t& dvalue=0) {
+  i >> x;
+  if ( i.fail() ) {
+    x = dvalue;
+    i.clear();
+    i.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    return false;
+  } else {
+    return true;
+  }
+}
+
 template <typename feature_value_t, typename real_t=double, typename polarity_t=int, typename delta_t=int>
 class Perceptron {
-public:
+protected:
   size_t dimensions;
+public:
   size_t iterations;
   delta_t delta;
   bool check_convergence;
 protected:
-  std::vector<real_t> weights;
-  std::vector<real_t> weights_avg;
-  real_t bias;
-  real_t bias_avg;
-  size_t averaging_count;
+  std::vector<feature_value_t> weights;
+  std::vector<feature_value_t> weights_avg;
+  polarity_t bias;
+  polarity_t bias_avg;
+  int averaging_count;
 
 public:
 
   Perceptron(size_t dim, size_t iter=40)
     : dimensions(dim), iterations(iter),
-      delta(1), check_convergence(true) {
+      delta(1), check_convergence(true),
+      weights(dim, 0), weights_avg(dim, 0),
+      bias(0), bias_avg(0),
+      averaging_count(1) {
     init();
   }
   virtual ~Perceptron() {
   }
-  
+
+  size_t get_dimensions() { return this->dimensions; }
+  void   set_dimensions(size_t n) { this->dimensions = n; }
+
   void init() {
+    init(this->dimensions, this->iterations);
+  }
+  void init(size_t dim) {
+    init(dim, this->iterations);
+  }
+  void init(size_t dim, size_t iter) {
+    this->dimensions = dim;
+    this->iterations = iter;
     this->weights_avg.clear();
     this->weights.clear();
-    
-    for ( size_t i = 0; i < this->dimensions; ++i ) {
-      this->weights.push_back(0);
-      this->weights_avg.push_back(0);
-    }
-    this->averaging_count = 1;
+    this->weights_avg.resize(this->dimensions, 0);
+    this->weights.resize(this->dimensions, 0);
     this->bias = 0.0;
     this->bias_avg = 0.0;
+    this->averaging_count = 1;
   }
 
   const char* store(const char* filename) {
@@ -69,22 +106,36 @@ public:
     return filename;
   }
   
-  void load(const char* filename) {
+  bool load(const char* filename) {
     this->init();
     std::ifstream in(filename);
-    in >> this->bias;
-    in >> this->bias_avg;
-    in >> this->averaging_count;
-    for ( size_t i = 0; i < this->averaging_count - 1; ++i ) {
-      in >> this->weights[i];
-      in >> this->weights_avg[i];
+
+    if ( !read_with_default(in, this->bias) ||
+         !read_with_default(in, this->bias_avg) ||
+         !read_with_default(in, this->averaging_count, 1) ) {
+      return false;
     }
+    for ( size_t i = 0; i < this->dimensions; ++i ) {
+      if ( in.eof() ) {
+        return false;
+      }
+      if ( !read_with_default(in, this->weights[i])
+           || !read_with_default(in, this->weights_avg[i]) ) {
+        return false;
+      }
+    }
+    return true;
   }
   
   size_t train(const std::vector<std::vector<feature_value_t> >& samples,
-                const std::vector<polarity_t>& sample_labels) {
+               const std::vector<polarity_t>& sample_labels) {
+    FOREACH(it, samples) {
+       if ( it->size() < this->dimensions ) {
+         this->dimensions = it->size();
+       }
+      check_feature_vector(*it);
+    }
     this->init();
-    FOREACH(it, samples) check_feature_vector(*it);
 
     size_t i;
     for ( i = 0; i < this->iterations; ++i ) {
@@ -96,13 +147,15 @@ public:
 #endif
       bool no_change = true;
       for ( size_t j = 0; j < samples.size(); ++j ) {
-        real_t given_polarity = sample_labels[j];
-        real_t prediction = this->predict(samples[j]);
-        if (! (given_polarity * prediction > 0) ) { // TODO: ignore the difference within threshold
+        polarity_t given_polarity = sample_labels[j];
+        feature_value_t prediction = this->predict0(samples[j]);
+        assert(!is_nan(prediction));
+        assert(!is_nan(given_polarity));
+        if (! (prediction * given_polarity > 0) ) { // TODO: ignore the difference within threshold
           no_change = false;
           for ( size_t k = 0; k < this->dimensions; ++k ) {
-            this->weights[k]     += given_polarity * this->delta * samples[j][k];
-            this->weights_avg[k] += given_polarity * this->delta * samples[j][k] * this->averaging_count;
+            this->weights[k]     += (given_polarity * this->delta) * samples[j][k];
+            this->weights_avg[k] += (given_polarity * this->delta * this->averaging_count) * samples[j][k];
           }
           this->bias     += given_polarity;
           this->bias_avg += given_polarity * this->averaging_count;
@@ -112,26 +165,43 @@ public:
       if ( no_change && this->check_convergence ) {
         break;
       }
+      for ( size_t k = 0; k < this->dimensions; ++k ) {
+        if ( is_nan(this->weights[k]) ) {
+          std::cerr << "nan at [" << k << "]" << std::endl;
+          this->weights[k] = 0;
+        }
+        if ( is_nan(this->weights_avg[k]) ) {
+          std::cerr << "nan at [" << k << "] avg" << std::endl;
+          this->weights_avg[k] = 0;
+        }
+      }
     }
-
-    // TODO: これやったほうが公開用predictを2倍のはやさにできる
-    // if do below, predict() must not do the same
-//     for ( size_t k = 0; k < this->dimensions; ++k ) {
-//       this->weights[k] -= static_cast<real_t>(this->weights_avg[k]) / static_cast<real_t>(this->averaging_count);
-//     }
-//     this->bias -= static_cast<real_t>(this->bias_avg) / static_cast<real_t>(this->averaging_count);
     return i;
   }
-  
-  real_t predict(const std::vector<feature_value_t>& v) const {
-    check_feature_vector(v);    // TODO: make it faster for internal use by skipping this check
-    // NOTE: note that this value is not normalized by averaging_count
-    return std::inner_product(v.begin(), v.begin() + this->dimensions,
-                              this->weights.begin(),
-                              this->bias) * this->averaging_count -
-      std::inner_product(v.begin(), v.begin() + this->dimensions,
-                         this->weights_avg.begin(),
-                         this->bias_avg);
+
+  feature_value_t predict(const std::vector<feature_value_t>& v) const {
+    check_feature_vector(v);
+    VAR(ret, this->predict0(v));
+    return ret / feature_value_t(this->averaging_count);
+  }
+
+protected:
+  feature_value_t predict0(const std::vector<feature_value_t>& v) const {
+    assert(v.size() >= this->weights.size());
+    assert(v.size() >= this->weights_avg.size());
+    assert(!is_nan(this->bias));
+    assert(!is_nan(this->bias_avg));
+    
+    return feature_value_t(this->averaging_count)
+      * std::inner_product(v.begin(), v.begin() + this->dimensions,
+                           this->weights.begin(),
+                           feature_value_t(this->bias))
+      - std::inner_product(v.begin(), v.begin() + this->dimensions,
+                           this->weights_avg.begin(),
+                           feature_value_t(this->bias_avg));
+    // TODO:
+    // public version of predict() doesn't have to use two weights; it
+    // canbe merged to half the computation.
   }
 
 protected:
@@ -173,6 +243,7 @@ private:
   mutable      LRUCache<cache_key_t, feature_value_t, PKPerceptron<feature_value_t, real_t, polarity_t, delta_t> > cache;
   friend class LRUCache<cache_key_t, feature_value_t, PKPerceptron<feature_value_t, real_t, polarity_t, delta_t> >;
  // TODO: 重複したサンプルの重みも共有すべき？（現状は別々に扱う）
+  typedef Perceptron<feature_value_t, real_t, polarity_t, delta_t> super_type_t;
 
 public:
 
@@ -183,8 +254,12 @@ public:
   }
   virtual ~PKPerceptron() {
   }
-  
+
+  size_t get_dimensions() { return super_type_t::get_dimensions(); }
+  void   set_dimensions(size_t n) { super_type_t::set_dimensions(n); }
+
   void init() {
+    super_type_t::init(this->dimensions);
     this->weighted_bases.clear();
     this->weighted_bases_avg.clear();
     this->bases.clear();
@@ -267,6 +342,12 @@ public:
 
   size_t train(const std::vector< std::vector< feature_value_t> >& samples,
                const std::vector< polarity_t >& sample_labels) {
+    FOREACH(it, samples) {
+       if ( it->size() < this->dimensions ) {
+         this->dimensions = it->size();
+       }
+      check_feature_vector(*it);
+    }
     this->init();
     FOREACH(it, samples) {
       check_feature_vector(*it);
@@ -402,20 +483,26 @@ public:
     return filename;
   }
   
-  void load(const char* filename) {
+  bool load(const char* filename) {
     this->init();
     std::ifstream in(filename);
-    in >> this->bias;
-    in >> this->bias_avg;
+    if ( !read_with_default(in, this->bias) ||
+         !read_with_default(in, this->bias_avg) ) {
+      return false;
+    }
     size_t basenum, weightnum;
-    in >> basenum;
-    in >> weightnum;;
-    in >> this->averaging_count;
+    if ( !read_with_default<size_t>(in, basenum, 1) ||
+         !read_with_default<size_t>(in, weightnum, 1) ||
+         !read_with_default(in, this->averaging_count, 1) ) {
+      return false;
+    }
     for ( size_t i = 0; i < basenum; ++i ) {
       std::vector<feature_value_t> vec;
       for ( size_t j = 0; j < this->dimensions; ++j ) {
         feature_value_t x;
-        in >> x;
+        if ( !read_with_default(in, x) ) {
+          return false;
+        }
         vec.push_back(x);
       }
       VAR(p, this->bases.insert(vec));
@@ -426,13 +513,16 @@ public:
     for ( size_t i = 0; i < weightnum; ++i ) {
       delta_t x1, x2;
       size_t y1,y2;
-      in >> x1;
-      in >> y1;
-      in >> x2;
-      in >> y2;
+      if ( !read_with_default(in, x1) ||
+           !read_with_default(in, y1) ||
+           !read_with_default(in, x2) ||
+           !read_with_default(in, y2 ) ) {
+        return false;
+      }
       this->weighted_bases.push_back(std::make_pair(x1, y1));
       this->weighted_bases_avg.push_back(std::make_pair(x2, y2));
     }
+    return true;
   }
 
 private:
@@ -510,10 +600,10 @@ template <typename T> void equal(T f1, T l1, T f2, T l2, const char* name = "") 
 #include <ctime>
 #include <cstdio>
 
-const char* temp_path() {
+std::string temp_path() {
   std::stringstream s;
   s << "f57a" << time(NULL) << "__";
-  return s.str().c_str();
+  return s.str();
 }
 
 int main() {
@@ -564,12 +654,17 @@ int main() {
     b.push_back(-1);
     b.push_back(-1);
     
-    perc.train(samples, b);
+    ok(perc.train(samples, b) == 1, "percetpron_perceptron#train");
     Perceptron<feature_value_t, real_t> perc2(3);
-    const char* temp = temp_path();
-    perc.store(temp);
-    perc2.load(temp);
-    remove(temp);
+    string temp = temp_path();
+    ok(perc.store(temp.c_str()), string("percetpron_perceptron#store " + temp).c_str());
+    bool ok_load = perc2.load(temp.c_str());
+    ok(ok_load, "percetpron_perceptron#load");
+    if ( ok_load ) {
+      remove(temp.c_str());
+    } else {
+      return 1;
+    }
     for ( size_t i = 0; i < samples.size(); ++i ) {
       real_t res = perc.predict(samples[i]);
       same_sign(b[i], res,
@@ -581,9 +676,9 @@ int main() {
     kperc.train(samples, b);
     PKPerceptron<feature_value_t, real_t, int, real_t> kperc2(3);
     temp = temp_path();
-    kperc.store(temp);
-    kperc2.load(temp);
-    remove(temp);
+    kperc.store(temp.c_str());
+    kperc2.load(temp.c_str());
+    remove(temp.c_str());
     for ( size_t i = 0; i < samples.size(); ++i ) {
       real_t res = kperc.predict(samples[i]);
       same_sign(b[i], res,

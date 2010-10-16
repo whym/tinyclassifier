@@ -1,18 +1,16 @@
 CXXFLAGS := $(CXXFLAGS) -I../include -L../lib -lstdc++ -Wall
 CC := $(CXX)
-SOURCES = sample.cc
+RESULTS = sample
+SOURCES = *.cc
 HEADERS = ../include/*.h
 DEPFILE = .depend.makefile
 
 all: .succeed
-.succeed: sample
+.succeed: build
 	./run_tests.sh
-sample: sample.o
-	$(CXX) $(CXXFLAGS) -o $@ $<
-%o: %.cc
-	$(CXX) $(CXXFLAGS) -c -o $@ $<
+build: $(RESULTS)
 clean:
-	-rm  sample sample.o $(DEPFILE)
+	-rm  $(RESULTS) *.o $(DEPFILE)
 
 depend: $(DEPFILE)
 $(DEPFILE): $(SOURCES) $(HEADERS)

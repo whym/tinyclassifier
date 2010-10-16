@@ -22,7 +22,7 @@ perl/$(SWIGNAME)_wrap.cxx: $(SWIGNAME).i $(HEADERS)
 	cd perl && perl Makefile.PL && $(MAKE) LD_RUN_PATH="" && sh ./run_tests.sh
 
 python/$(SWIGNAME)_wrap.cxx: $(SWIGNAME).i $(HEADERS)
-	$(SWIG) $(SWIGFLAGS) -c++ -python -o $@ -shadow $<
+	$(SWIG) $(SWIGFLAGS) -c++ -python -modern -o $@ -shadow $<
 .python: python/$(SWIGNAME)_wrap.cxx
 	cd python && python setup.py build && sh ./run_tests.sh
 
@@ -41,6 +41,7 @@ clean:
 	-$(MAKE) -C perl   $@
 	-$(MAKE) -C python $@
 	-$(MAKE) -C java   $@
+	cd python && python setup.py clean
 
 # NOTE: run make depend first (for resolving header file dependencies)
 include $(DEPFILE)

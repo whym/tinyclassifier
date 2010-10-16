@@ -10,6 +10,6 @@ end
 #   mkmf_failed
 # end
 
-with_cppflags("#{ENV['CFLAGS']} #{ENV['CXXFLAGS']} -Wall") do
+with_cppflags("#{ENV['CFLAGS']} #{ENV['CXXFLAGS']} -Wall -DNDEBUG") do
   create_makefile(SWIGNAME)
 end

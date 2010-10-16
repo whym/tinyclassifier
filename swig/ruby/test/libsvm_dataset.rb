@@ -41,7 +41,6 @@ end
 class TC_LibSVM_Dataset < Test::Unit::TestCase
   include TinyClassifier
 
-  DIM = 123
   DATA_TR = open_or_uri_open('http://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/binary/a1a').to_a.join
   DATA_TS = open_or_uri_open('http://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/binary/a1a.t').to_a.join
 
@@ -102,19 +101,14 @@ class TC_LibSVM_Dataset < Test::Unit::TestCase
     end
   end
 
-  def _test_libsvm(perp, train, test, dim)
-    require 'stringio'
+  def _test_libsvm(perp, labels, vectors, test)
+    dim = vectors[0].size
 
-    train,test = *([train,test].map{|x| if x.is_a? String then StringIO.new(x)
-                                        else x
-                                        end})
-    train = StringIO.new(train.to_a.shuffle.join)
-    labels, vectors = *libsvm_to_vec(train, dim)
-    STDERR.puts " training data size = #{labels.size}"
     if perp.respond_to?(:get_cache_size) then
       STDERR.puts " cache size = #{perp.get_cache_size}"
     end
     itr = perp.train(vectors, labels)
+    STDERR.puts " data size * dims = #{labels.size} * #{perp.get_dimensions}"
     STDERR.puts " iterations = #{itr}"
 
     pn = {
@@ -138,14 +132,21 @@ class TC_LibSVM_Dataset < Test::Unit::TestCase
 
   def test_libsvm1
     require 'benchmark'
+    require 'stringio'
+
+    train = StringIO.new(DATA_TR)
+    train = StringIO.new(train.to_a.shuffle.join)
+    labels, vectors = *libsvm_to_vec(train)
+    dim = vectors[0].size
+
     Benchmark.bm do |bm|
-      [['linear',    FloatPerceptron.new(DIM,   4)],
-       ['1st-order', FloatPKProjectron.new(DIM, 4, 1, 0, 0, 0.8)],
-       ['3rd-order', FloatPKPerceptron.new(DIM, 4, 3, 1, 0)]].each do |ent|
+      [['linear',    FloatPerceptron.new(dim,   4)],
+       ['1st-order', FloatPKProjectron.new(dim, 4, 1, 0, 0, 0.8)],
+       ['3rd-order', FloatPKPerceptron.new(dim, 4, 3, 1, 0)]].each do |ent|
         name,p = *ent
         srand(1029)
         STDERR.puts "#{name}:"
-        bm.report { _test_libsvm(p, DATA_TR, DATA_TS, DIM) }
+        bm.report { _test_libsvm(p, labels, vectors, StringIO.new(DATA_TS)) }
       end
     end
   end
