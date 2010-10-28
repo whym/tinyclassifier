@@ -52,10 +52,11 @@ Averaged Perceptron for binary classification
 .. [#]
   
   The implementation of 'PKPerceptron' is based on Ling-Pipe's
-  explanation of Kernel Averaged Perceptron. See below for further
-  information.
+  explanation of Kernel Averaged Perceptron and descriptions in the
+  thesis of Dr. Hal Daumé III. See below for further information.
   
-  http://alias-i.com/lingpipe/docs/api/com/aliasi/classify/PerceptronClassifier.html
+  - http://alias-i.com/lingpipe/docs/api/com/aliasi/classify/PerceptronClassifier.html
+  - http://hal3.name/thesis.html
 
 Planned to implement
 ------------------------------
