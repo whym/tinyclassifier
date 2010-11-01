@@ -27,7 +27,7 @@ python/$(SWIGNAME)_wrap.cxx: $(SWIGNAME).i $(HEADERS)
 	cd python && python setup.py build && sh ./run_tests.sh
 
 java/$(SWIGNAME)_wrap.cxx: $(SWIGNAME).i $(HEADERS)
-	$(SWIG) $(SWIGFLAGS) -c++ -java -outdir ./java/com/github/whym/tinyclassifier -o $@ -package com.github.whym.tinyclassifier -shadow $<
+	$(SWIG) $(SWIGFLAGS) -c++ -java -outdir ./java/org/whym/tinyclassifier -o $@ -package org.whym.tinyclassifier -shadow $<
 .java: java/$(SWIGNAME)_wrap.cxx
 	cd java && $(MAKE) && $(MAKE) test
 

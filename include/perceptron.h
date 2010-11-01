@@ -47,7 +47,7 @@ bool read_with_default(std::istream& i, value_t& x, const value_t& dvalue=0) {
   }
 }
 
-template <typename feature_value_t, typename real_t=double, typename polarity_t=int, typename delta_t=int>
+template <typename feature_value_t, typename real_t=double, typename polarity_t=int, typename delta_t=feature_value_t, typename predict_t=feature_value_t>
 class Perceptron {
 protected:
   size_t dimensions;
@@ -179,10 +179,10 @@ public:
     return i;
   }
 
-  feature_value_t predict(const std::vector<feature_value_t>& v) const {
+  predict_t predict(const std::vector<feature_value_t>& v) const {
     check_feature_vector(v);
     VAR(ret, this->predict0(v));
-    return ret / feature_value_t(this->averaging_count);
+    return ret / predict_t(this->averaging_count);
   }
 
 protected:
@@ -225,7 +225,7 @@ std::ostream& operator<<(std::ostream& s, const typename std::set<std::vector<T>
   return s << x << "=" << *x;
 }
 
-template <typename feature_value_t, typename real_t=double, typename polarity_t=int, typename delta_t=int> class PKPerceptron :public Perceptron<feature_value_t, real_t, polarity_t, delta_t> {
+template <typename feature_value_t, typename real_t=double, typename polarity_t=int, typename delta_t=feature_value_t, typename predict_t=real_t> class PKPerceptron :public Perceptron<feature_value_t, real_t, polarity_t, delta_t, predict_t> {
 public:
   size_t kernel_order;
   feature_value_t kernel_bias;
@@ -240,15 +240,15 @@ private:
   std::vector<real_t> norms;
   std::vector<std::vector<real_t> > orthonormals;
   typedef unsigned long cache_key_t;
-  mutable      LRUCache<cache_key_t, feature_value_t, PKPerceptron<feature_value_t, real_t, polarity_t, delta_t> > cache;
-  friend class LRUCache<cache_key_t, feature_value_t, PKPerceptron<feature_value_t, real_t, polarity_t, delta_t> >;
+  mutable      LRUCache<cache_key_t, feature_value_t, PKPerceptron<feature_value_t, real_t, polarity_t, delta_t, predict_t> > cache;
+  friend class LRUCache<cache_key_t, feature_value_t, PKPerceptron<feature_value_t, real_t, polarity_t, delta_t, predict_t> >;
  // TODO: 重複したサンプルの重みも共有すべき？（現状は別々に扱う）
-  typedef Perceptron<feature_value_t, real_t, polarity_t, delta_t> super_type_t;
+  typedef Perceptron<feature_value_t, real_t, polarity_t, delta_t, predict_t> super_type_t;
 
 public:
 
   PKPerceptron(size_t dim, size_t iter=40, size_t order=2, feature_value_t bias=1, cache_size_t cache_size=0, real_t pth=0)
-    : Perceptron<feature_value_t, real_t, polarity_t, delta_t>(dim, iter), kernel_order(order),
+    : Perceptron<feature_value_t, real_t, polarity_t, delta_t, predict_t>(dim, iter), kernel_order(order),
       kernel_bias(bias), projection_threshold(pth), cache(*this, cache_size) {
     init();
   }
@@ -443,7 +443,7 @@ public:
     return i;
   }
   
-  real_t predict(const std::vector<feature_value_t>& v) const {
+  predict_t predict(const std::vector<feature_value_t>& v) const {
     check_feature_vector(v);
     // NOTE: note that this value is not normalized by averaging_count
     real_t ret = static_cast<real_t>(this->bias);
@@ -624,7 +624,7 @@ int main() {
 
   {
     PKPerceptron<feature_value_t, real_t, int, real_t> kperc(3);
-    Perceptron<feature_value_t, real_t> perc(3);
+    Perceptron<feature_value_t, real_t, int, feature_value_t, real_t> perc(3);
     perc.iterations = 20;
     vector<vector<feature_value_t> > samples;
     vector<feature_value_t> v;
@@ -655,7 +655,7 @@ int main() {
     b.push_back(-1);
     
     ok(perc.train(samples, b) == 1, "percetpron_perceptron#train");
-    Perceptron<feature_value_t, real_t> perc2(3);
+    Perceptron<feature_value_t, real_t, int, feature_value_t, real_t> perc2(3);
     string temp = temp_path();
     ok(perc.store(temp.c_str()), string("percetpron_perceptron#store " + temp).c_str());
     bool ok_load = perc2.load(temp.c_str());

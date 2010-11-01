@@ -5,8 +5,8 @@ TinyClassifier
 a tiny machine learning library for scripting
 ------------------------------------------------
 
- :Homepage: http://whym.github.com/tinyclassifier
- :Contact:  http://github.com/whym
+ :Homepage: http://github.com/whym/tinyclassifier
+ :Contact:  http://whym.org
 
 Overview
 ==============================
