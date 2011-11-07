@@ -169,7 +169,7 @@ Ruby ::
       }
     
       keys = SAMPLES.keys.sort  # Obtain feature vectors
-      keys = keys.map{|x| SAMPLES[x]} # Obtain labels
+      labels = keys.map{|x| SAMPLES[x]} # Obtain labels
       p = IntPKPerceptron.new(SAMPLES.keys[0].length, 10) # Construct a perceptron that stops after 10 iterations
       p.train(IntVectorVector.new(keys),                  # Give the perceptron training examples
               IntVector.new(labels))
