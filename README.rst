@@ -133,7 +133,7 @@ Python ::
       from TinyClassifier import *
       
       # Prepare examples
-      SAMPLES = [
+      SAMPLES = sorted([
           [[-2, +1, -1], +1],
           [[-1, +2, +1], +1],
           [[-1, -1, -1], -1],
@@ -141,12 +141,13 @@ Python ::
           [[-1, +1, -1], +1],
           [[+1, -2, -1], -1],
           [[+1, -1, +1], -1]
-          ]
+          ], key=lambda x: x[0])
       
-      vecs = sorted([x[0] for x in SAMPLES]) # Obtain feature vectors
-      labs = sorted([x[1] for x in SAMPLES]) # Obtain labels
+      vecs = [x[0] for x in SAMPLES] # Obtain feature vectors
+      labs = [x[1] for x in SAMPLES] # Obtain labels
+      print vecs
       p = IntPKPerceptron(len(SAMPLES[0]), 10) # Construct a perceptron that stops after 10 iterations
-      p.train(IntVectorVector(vecs),           # Give the perceptron training examples
+      p.train(IntVectorVector(vecs),           # Give the training examples to the perceptron
               IntVector(labs))
       for (i, k) in enumerate(vecs):  # Print the prediction for the training examples (closed set evaluation)
           pred = p.predict(k)
@@ -168,10 +169,10 @@ Ruby ::
         [+1, -1, +1] => -1
       }
     
-      keys = SAMPLES.keys.sort  # Obtain feature vectors
-      labels = keys.map{|x| SAMPLES[x]} # Obtain labels
-      p = IntPKPerceptron.new(SAMPLES.keys[0].length, 10) # Construct a perceptron that stops after 10 iterations
-      p.train(IntVectorVector.new(keys),                  # Give the perceptron training examples
+      vecs   = SAMPLES.keys.sort        # Obtain feature vectors
+      labels = SAMPLES.values_at(*vecs) # Obtain labels
+      p = IntPKPerceptron.new(SAMPLES.vecs[0].length, 10) # Construct a perceptron that stops after 10 iterations
+      p.train(IntVectorVector.new(vecs),                  # Give the training examples to the perceptron
               IntVector.new(labels))
       keys.each do |k|          # Print the prediction for the training examples (closed set evaluation)
         pred = p.predict(k)
